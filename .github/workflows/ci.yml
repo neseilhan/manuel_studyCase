@@ -91,12 +91,12 @@ jobs:
           echo "| 🏷️ Category | 🔢 Total | ✅ Passed | ❌ Failed | 📊 Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------------|----------|-----------|-----------|-----------|" >> $GITHUB_STEP_SUMMARY
           
-          # Extract actual test counts from XML for each category
-          AUTH_TOTAL=$(grep -c 'test_auth.py' test-results.xml 2>/dev/null || echo "0")
-          USER_TOTAL=$(grep -c 'test_users.py' test-results.xml 2>/dev/null || echo "0")
-          SEC_TOTAL=$(grep -c 'test_security.py' test-results.xml 2>/dev/null || echo "0")
-          PERF_TOTAL=$(grep -c 'test_performance.py' test-results.xml 2>/dev/null || echo "0")
-          OTHER_TOTAL=$(grep -c 'test_other.py' test-results.xml 2>/dev/null || echo "0")
+            # Extract actual test counts from XML for each category
+            AUTH_TOTAL=$(grep -c 'test_auth.py::' test-results.xml 2>/dev/null || echo "0")
+            USER_TOTAL=$(grep -c 'test_users.py::' test-results.xml 2>/dev/null || echo "0")
+            SEC_TOTAL=$(grep -c 'test_security.py::' test-results.xml 2>/dev/null || echo "0")
+            PERF_TOTAL=$(grep -c 'test_performance.py::' test-results.xml 2>/dev/null || echo "0")
+            OTHER_TOTAL=$(grep -c 'test_other.py::' test-results.xml 2>/dev/null || echo "0")
           
           
           # Calculate passed tests for each category
