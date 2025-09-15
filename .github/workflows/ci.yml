@@ -97,7 +97,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Calculate test results per class dynamically
-          echo "### 📊 Test Results by Class" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Test Class | Total Tests | ✅ Passed | ❌ Failed | Success Rate |" >> $GITHUB_STEP_SUMMARY
           echo "|------------|-------------|-----------|-----------|--------------|" >> $GITHUB_STEP_SUMMARY
@@ -113,7 +112,7 @@ jobs:
           OTHER_FAILED=$(grep -c 'test_other.py.*failure' test-results.xml 2>/dev/null || echo "0")
           OTHER_PASSED=$((OTHER_TOTAL - OTHER_FAILED))
           OTHER_RATE=$((OTHER_PASSED * 100 / OTHER_TOTAL))
-          echo "| **Other/Misc Tests** | $OTHER_TOTAL | $OTHER_PASSED | $OTHER_FAILED | $OTHER_RATE% |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Other Tests** | $OTHER_TOTAL | $OTHER_PASSED | $OTHER_FAILED | $OTHER_RATE% |" >> $GITHUB_STEP_SUMMARY
           
           SEC_TOTAL=17
           SEC_FAILED=$(grep -c 'test_security.py.*failure' test-results.xml 2>/dev/null || echo "0")
