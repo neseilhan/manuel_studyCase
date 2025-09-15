@@ -300,35 +300,42 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+
+          # Calculate actual execution time from multiple sources
+          EXECUTION_TIME=""
           
-          # Calculate actual execution time
-          if [ -n "$TEST_START_TIME" ] && [ -n "$TEST_END_TIME" ]; then
-            EXECUTION_DURATION=$((TEST_END_TIME - TEST_START_TIME))
-            MINUTES=$((EXECUTION_DURATION / 60))
-            SECONDS=$((EXECUTION_DURATION % 60))
-            if [ $MINUTES -gt 0 ]; then
-              EXECUTION_TIME="${MINUTES}m ${SECONDS}s"
-            else
-              EXECUTION_TIME="${SECONDS}s"
-            fi
-          else
-            # Try to get time from XML results
-            if [ -f "test-results.xml" ]; then
+          # First try: Get time from XML results (most accurate)
+          if [ -f "test-results.xml" ]; then
+            # Look for testsuite time attribute (total execution time)
+            XML_TIME=$(grep -o 'testsuite.*time="[0-9.]*"' test-results.xml | head -1 | grep -o 'time="[0-9.]*"' | grep -o '[0-9.]*' || echo "")
+            if [ -z "$XML_TIME" ]; then
+              # Alternative: look for any time attribute in the XML
               XML_TIME=$(grep -o 'time="[0-9.]*"' test-results.xml | head -1 | grep -o '[0-9.]*' || echo "")
-              if [ -n "$XML_TIME" ]; then
-                # Convert to integer seconds
-                INT_TIME=$(echo "$XML_TIME" | cut -d. -f1)
-                if [ $INT_TIME -gt 0 ]; then
-                  EXECUTION_TIME="${INT_TIME}s"
-                else
-                  EXECUTION_TIME="~12s (estimated)"
-                fi
-              else
-                EXECUTION_TIME="~12s (estimated)"
-              fi
-            else
-              EXECUTION_TIME="~12s (estimated)"
             fi
+            if [ -n "$XML_TIME" ]; then
+              # Convert to integer seconds, round up if needed
+              INT_TIME=$(echo "$XML_TIME" | cut -d. -f1)
+              DECIMAL=$(echo "$XML_TIME" | cut -d. -f2)
+              if [ -n "$DECIMAL" ] && [ "$DECIMAL" -gt 0 ]; then
+                INT_TIME=$((INT_TIME + 1))
+              fi
+              if [ $INT_TIME -gt 0 ]; then
+                EXECUTION_TIME="${INT_TIME}s"
+              fi
+            fi
+          fi
+          
+          # Second try: Use environment variables if available
+          if [ -z "$EXECUTION_TIME" ] && [ -n "$TEST_START_TIME" ] && [ -n "$TEST_END_TIME" ]; then
+            EXECUTION_DURATION=$((TEST_END_TIME - TEST_START_TIME))
+            if [ $EXECUTION_DURATION -gt 0 ]; then
+              EXECUTION_TIME="${EXECUTION_DURATION}s"
+            fi
+          fi
+          
+          # Fallback: Use realistic estimate
+          if [ -z "$EXECUTION_TIME" ]; then
+            EXECUTION_TIME="~12s (estimated)"
           fi
           echo "| **Execution Time** | $EXECUTION_TIME |" >> $GITHUB_STEP_SUMMARY
           echo "| **Test Environment** | Ubuntu Latest |" >> $GITHUB_STEP_SUMMARY
