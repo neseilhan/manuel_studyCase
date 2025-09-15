@@ -1,5 +1,4 @@
 name: Test API - Study Case
-
 on:
   push:
     branches: [ main, master ]
@@ -9,74 +8,67 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-        
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        pip install -r api_tests/requirements_test.txt
-        pip install pytest-html pytest-xdist
-        
-    - name: Start API server
-      run: |
-        uvicorn main:app --host 0.0.0.0 --port 8000 &
-        sleep 10
-        
-    - name: Seed test data
-      run: python seed_data.py
-        
-    - name: Run tests with detailed reports
-      run: |
-        cd api_tests
-        
-        # Remove old reports to ensure fresh generation
-        rm -f test-report.html test-results.xml
-        
-        echo "🧪 Starting test execution..."
-        echo "📊 Running 74 tests across 5 categories..."
-        echo "🕐 Timestamp: $(date)"
-        echo ""
-        
-        python -m pytest test_classes/ \
-          --html=test-report.html \
-          --self-contained-html \
-          --junitxml=test-results.xml \
-          --tb=long \
-          -v \
-          --durations=10 \
-          --maxfail=20 \
-          --continue-on-collection-errors
-        
-        echo ""
-        echo "✅ Test execution completed!"
-        echo "📁 Reports generated:"
-        echo "   - test-report.html (Visual report)"
-        echo "   - test-results.xml (JUnit format)"
-        
-    - name: Generate detailed test summary
-      if: always()
-      run: |
-        cd api_tests
-        
-        echo "# 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        # Extract test results from XML
-        if [ -f "test-results.xml" ]; then
-          TOTAL=$(grep -o 'tests="[0-9]*"' test-results.xml | grep -o '[0-9]*' | head -1)
-          FAILED=$(grep -o 'failures="[0-9]*"' test-results.xml | grep -o '[0-9]*' | head -1)
-          PASSED=$((TOTAL - FAILED))
-          SUCCESS_RATE=$((PASSED * 100 / TOTAL))
-          
-          
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r api_tests/requirements_test.txt
+          pip install pytest-html pytest-xdist
+
+      - name: Start API server
+        run: |
+          uvicorn main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+
+      - name: Seed test data
+        run: python seed_data.py
+
+      - name: Run tests with detailed reports
+        run: |
+          cd api_tests
+          # Remove old reports to ensure fresh generation
+          rm -f test-report.html test-results.xml
+          echo "🧪 Starting test execution..."
+          echo "📊 Running 74 tests across 5 categories..."
+          echo "🕐 Timestamp: $(date)"
+          echo ""
+          python -m pytest test_classes/ \
+            --html=test-report.html \
+            --self-contained-html \
+            --junitxml=test-results.xml \
+            --tb=long \
+            -v \
+            --durations=10 \
+            --maxfail=20 \
+            --continue-on-collection-errors
+          echo ""
+          echo "✅ Test execution completed!"
+          echo "📁 Reports generated:"
+          echo " - test-report.html (Visual report)"
+          echo " - test-results.xml (JUnit format)"
+
+      - name: Generate detailed test summary
+        if: always()
+        run: |
+          cd api_tests
+
+          echo "# 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "test-results.xml" ]; then
+            TOTAL=$(grep -o 'tests="[0-9]*"' test-results.xml | grep -o '[0-9]*' | head -1)
+            FAILED=$(grep -o 'failures="[0-9]*"' test-results.xml | grep -o '[0-9]*' | head -1)
+            PASSED=$((TOTAL - FAILED))
+            SUCCESS_RATE=$((PASSED * 100 / TOTAL))
+
             # Test kategorilerinin toplam ve hata sayıları - TABLODAN ÖNCE HESAPLA!
             AUTH_TOTAL=$(grep -c 'file=".*test_auth.py' test-results.xml 2>/dev/null || echo "0")
             AUTH_FAILED=$(grep -c 'file=".*test_auth.py".*status="failed"' test-results.xml 2>/dev/null || echo "0")
@@ -104,11 +96,11 @@ jobs:
             echo "| **❌ Failed** | $FAILED | $((100 - SUCCESS_RATE))% |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
 
-          
+            # TABLO ŞİMDİ DOĞRU GÖZÜKECEK
             echo "## 📋 Test Categories" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| Category | Total | Passed | Failed |" >> $GITHUB_STEP_SUMMARY
-            echo "|----------|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Category         | Total      | Passed     | Failed     |" >> $GITHUB_STEP_SUMMARY
+            echo "|------------------|-----------|------------|------------|" >> $GITHUB_STEP_SUMMARY
             echo "| **Authentication** | $AUTH_TOTAL | $AUTH_PASSED | $AUTH_FAILED |" >> $GITHUB_STEP_SUMMARY
             echo "| **User CRUD**      | $USER_TOTAL | $USER_PASSED | $USER_FAILED |" >> $GITHUB_STEP_SUMMARY
             echo "| **Security**       | $SEC_TOTAL  | $SEC_PASSED  | $SEC_FAILED  |" >> $GITHUB_STEP_SUMMARY
@@ -116,207 +108,191 @@ jobs:
             echo "| **Other**          | $OTHER_TOTAL| $OTHER_PASSED| $OTHER_FAILED|" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Debug: Show extracted counts
-          echo "🔍 Debug - Test counts from XML:" >> $GITHUB_STEP_SUMMARY
-          echo "- Auth: Total=$AUTH_TOTAL, Failed=$AUTH_FAILED" >> $GITHUB_STEP_SUMMARY
-          echo "- User: Total=$USER_TOTAL, Failed=$USER_FAILED" >> $GITHUB_STEP_SUMMARY
-          echo "- Security: Total=$SEC_TOTAL, Failed=$SEC_FAILED" >> $GITHUB_STEP_SUMMARY
-          echo "- Performance: Total=$PERF_TOTAL, Failed=$PERF_FAILED" >> $GITHUB_STEP_SUMMARY
-          echo "- Other: Total=$OTHER_TOTAL, Failed=$OTHER_FAILED" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ $FAILED -gt 0 ]; then
-            echo "## 🐛 Detailed Failed Tests" >> $GITHUB_STEP_SUMMARY
+            # Debug: Show extracted counts
+            echo "🔍 Debug - Test counts from XML:" >> $GITHUB_STEP_SUMMARY
+            echo "- Auth: Total=$AUTH_TOTAL, Failed=$AUTH_FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "- User: Total=$USER_TOTAL, Failed=$USER_FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "- Security: Total=$SEC_TOTAL, Failed=$SEC_FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "- Performance: Total=$PERF_TOTAL, Failed=$PERF_FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "- Other: Total=$OTHER_TOTAL, Failed=$OTHER_FAILED" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            
-            # Extract actual failed tests from XML dynamically
-            echo "### Authentication Tests" >> $GITHUB_STEP_SUMMARY
-            AUTH_FAILED=$(grep -c 'test_auth.py.*failure' test-results.xml 2>/dev/null || echo "0")
-            echo "**Failed: $AUTH_FAILED**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            if [ $AUTH_FAILED -gt 0 ]; then
-              echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
-              echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_logout_invalid_token\` | AssertionError | 'No active session' in message | 'Logged out successfully' |" >> $GITHUB_STEP_SUMMARY
-              if [ $AUTH_FAILED -gt 1 ]; then
-                echo "| \`test_token_expiration_handling\` | AssertionError | 401 Unauthorized | 200 OK (malformed token) |" >> $GITHUB_STEP_SUMMARY
+
+            if [ $FAILED -gt 0 ]; then
+              echo "## 🐛 Detailed Failed Tests" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+
+              echo "### Authentication Tests" >> $GITHUB_STEP_SUMMARY
+              echo "**Failed: $AUTH_FAILED**" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              if [ $AUTH_FAILED -gt 0 ]; then
+                echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
+                echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_logout_invalid_token\\ | AssertionError | 'No active session' in message | 'Logged out successfully' |" >> $GITHUB_STEP_SUMMARY
+                if [ $AUTH_FAILED -gt 1 ]; then
+                  echo "| \\test_token_expiration_handling\\ | AssertionError | 401 Unauthorized | 200 OK (malformed token) |" >> $GITHUB_STEP_SUMMARY
+                fi
+              else
+                echo "✅ All authentication tests passed!" >> $GITHUB_STEP_SUMMARY
               fi
-            else
-              echo "✅ All authentication tests passed!" >> $GITHUB_STEP_SUMMARY
-            fi
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            echo "### Other Tests" >> $GITHUB_STEP_SUMMARY
-            OTHER_FAILED=$(grep -c 'test_other.py.*failure' test-results.xml 2>/dev/null || echo "0")
-            echo "**Failed: $OTHER_FAILED**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            if [ $OTHER_FAILED -gt 0 ]; then
-              echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
-              echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_search_users_by_username\` | HTTPError | 200 OK | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_search_users_by_email\` | HTTPError | 200 OK | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_search_users_field_username\` | HTTPError | 200 OK | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_search_users_field_email\` | HTTPError | 200 OK | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_search_users_exact_match\` | HTTPError | 200 OK | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_search_users_empty_query\` | HTTPError | 422 Validation Error | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_search_users_invalid_field\` | HTTPError | 422 Validation Error | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "✅ All other tests passed!" >> $GITHUB_STEP_SUMMARY
-            fi
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            echo "### Performance Tests" >> $GITHUB_STEP_SUMMARY
-            PERF_FAILED=$(grep -c 'test_performance.py.*failure' test-results.xml 2>/dev/null || echo "0")
-            echo "**Failed: $PERF_FAILED**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            if [ $PERF_FAILED -gt 0 ]; then
-              echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
-              echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_rate_limiting_performance\` | AssertionError | Some rate limits | 0 rate limits |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "✅ All performance tests passed!" >> $GITHUB_STEP_SUMMARY
-            fi
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            echo "### Security Tests" >> $GITHUB_STEP_SUMMARY
-            SEC_FAILED=$(grep -c 'test_security.py.*failure' test-results.xml 2>/dev/null || echo "0")
-            echo "**Failed: $SEC_FAILED**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            if [ $SEC_FAILED -gt 0 ]; then
-              echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
-              echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_password_hash_security\` | RateLimitError | 201 Created | 429 Too Many Requests |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_session_hijacking_attempt\` | AssertionError | 401 Unauthorized | 200 OK |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_information_disclosure\` | AssertionError | No session tokens | 5 tokens exposed |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "✅ All security tests passed!" >> $GITHUB_STEP_SUMMARY
-            fi
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            echo "### User CRUD Tests" >> $GITHUB_STEP_SUMMARY
-            USER_FAILED=$(grep -c 'test_users.py.*failure' test-results.xml 2>/dev/null || echo "0")
-            echo "**Failed: $USER_FAILED**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            if [ $USER_FAILED -gt 0 ]; then
-              echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
-              echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_create_user_valid\` | RateLimitError | 201 Created | 429 Too Many Requests |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_create_user_duplicate_username\` | RateLimitError | 400 Bad Request | 429 Too Many Requests |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_get_user_list_with_pagination\` | AssertionError | ≤5 items | 6 items returned |" >> $GITHUB_STEP_SUMMARY
-              echo "| \`test_username_case_sensitivity\` | RateLimitError | 201 Created | 429 Too Many Requests |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "✅ All user CRUD tests passed!" >> $GITHUB_STEP_SUMMARY
-            fi
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            echo "## 🔍 Error Analysis" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Main Issues Identified:" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            # Dynamic issue analysis based on actual failures
-            ISSUE_COUNT=1
-            
-            if [ $OTHER_FAILED -gt 0 ]; then
-              echo "$ISSUE_COUNT. **Search Endpoint Issues** ($OTHER_FAILED tests)" >> $GITHUB_STEP_SUMMARY
-              echo "   - Search endpoint returning 400 instead of 200" >> $GITHUB_STEP_SUMMARY
-              echo "   - Validation errors not properly handled" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              ISSUE_COUNT=$((ISSUE_COUNT + 1))
-            fi
-            
-            if [ $USER_FAILED -gt 0 ]; then
-              echo "$ISSUE_COUNT. **Rate Limiting Issues** ($USER_FAILED tests)" >> $GITHUB_STEP_SUMMARY
-              echo "   - Too aggressive rate limiting" >> $GITHUB_STEP_SUMMARY
-              echo "   - Tests hitting rate limit too quickly" >> $GITHUB_STEP_SUMMARY
+
+              echo "### Other Tests" >> $GITHUB_STEP_SUMMARY
+              echo "**Failed: $OTHER_FAILED**" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              ISSUE_COUNT=$((ISSUE_COUNT + 1))
-            fi
-            
-            if [ $SEC_FAILED -gt 0 ]; then
-              echo "$ISSUE_COUNT. **Security Issues** ($SEC_FAILED tests)" >> $GITHUB_STEP_SUMMARY
-              echo "   - Session tokens exposed in stats" >> $GITHUB_STEP_SUMMARY
-              echo "   - Session hijacking protection missing" >> $GITHUB_STEP_SUMMARY
+              if [ $OTHER_FAILED -gt 0 ]; then
+                echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
+                echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_search_users_by_username\\ | HTTPError | 200 OK | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_search_users_by_email\\ | HTTPError | 200 OK | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_search_users_field_username\\ | HTTPError | 200 OK | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_search_users_field_email\\ | HTTPError | 200 OK | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_search_users_exact_match\\ | HTTPError | 200 OK | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_search_users_empty_query\\ | HTTPError | 422 Validation Error | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_search_users_invalid_field\\ | HTTPError | 422 Validation Error | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "✅ All other tests passed!" >> $GITHUB_STEP_SUMMARY
+              fi
               echo "" >> $GITHUB_STEP_SUMMARY
-              ISSUE_COUNT=$((ISSUE_COUNT + 1))
-            fi
-            
-            if [ $AUTH_FAILED -gt 0 ]; then
-              echo "$ISSUE_COUNT. **Logic Issues** ($AUTH_FAILED tests)" >> $GITHUB_STEP_SUMMARY
-              echo "   - Logout behavior inconsistent" >> $GITHUB_STEP_SUMMARY
-              echo "   - Session management issues" >> $GITHUB_STEP_SUMMARY
+
+              echo "### Performance Tests" >> $GITHUB_STEP_SUMMARY
+              echo "**Failed: $PERF_FAILED**" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              ISSUE_COUNT=$((ISSUE_COUNT + 1))
-            fi
-            
-            if [ $PERF_FAILED -gt 0 ]; then
-              echo "$ISSUE_COUNT. **Performance Issues** ($PERF_FAILED tests)" >> $GITHUB_STEP_SUMMARY
-              echo "   - Rate limiting not working as expected" >> $GITHUB_STEP_SUMMARY
-              echo "   - Performance bottlenecks detected" >> $GITHUB_STEP_SUMMARY
+              if [ $PERF_FAILED -gt 0 ]; then
+                echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
+                echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_rate_limiting_performance\\ | AssertionError | Some rate limits | 0 rate limits |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "✅ All performance tests passed!" >> $GITHUB_STEP_SUMMARY
+              fi
               echo "" >> $GITHUB_STEP_SUMMARY
-              ISSUE_COUNT=$((ISSUE_COUNT + 1))
-            fi
-            
-            # If no issues, show success message
-            if [ $ISSUE_COUNT -eq 1 ]; then
-              echo "🎉 **No critical issues detected!**" >> $GITHUB_STEP_SUMMARY
-              echo "All test categories are performing well." >> $GITHUB_STEP_SUMMARY
+
+              echo "### Security Tests" >> $GITHUB_STEP_SUMMARY
+              echo "**Failed: $SEC_FAILED**" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
+              if [ $SEC_FAILED -gt 0 ]; then
+                echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
+                echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_password_hash_security\\ | RateLimitError | 201 Created | 429 Too Many Requests |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_session_hijacking_attempt\\ | AssertionError | 401 Unauthorized | 200 OK |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_information_disclosure\\ | AssertionError | No session tokens | 5 tokens exposed |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "✅ All security tests passed!" >> $GITHUB_STEP_SUMMARY
+              fi
+              echo "" >> $GITHUB_STEP_SUMMARY
+
+              echo "### User CRUD Tests" >> $GITHUB_STEP_SUMMARY
+              echo "**Failed: $USER_FAILED**" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              if [ $USER_FAILED -gt 0 ]; then
+                echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
+                echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_create_user_valid\\ | RateLimitError | 201 Created | 429 Too Many Requests |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_create_user_duplicate_username\\ | RateLimitError | 400 Bad Request | 429 Too Many Requests |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_get_user_list_with_pagination\\ | AssertionError | ≤5 items | 6 items returned |" >> $GITHUB_STEP_SUMMARY
+                echo "| \\test_username_case_sensitivity\\ | RateLimitError | 201 Created | 429 Too Many Requests |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "✅ All user CRUD tests passed!" >> $GITHUB_STEP_SUMMARY
+              fi
+              echo "" >> $GITHUB_STEP_SUMMARY
+
+              echo "## 🔍 Error Analysis" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### Main Issues Identified:" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+
+              ISSUE_COUNT=1
+              if [ $OTHER_FAILED -gt 0 ]; then
+                echo "$ISSUE_COUNT. **Search Endpoint Issues** ($OTHER_FAILED tests)" >> $GITHUB_STEP_SUMMARY
+                echo " - Search endpoint returning 400 instead of 200" >> $GITHUB_STEP_SUMMARY
+                echo " - Validation errors not properly handled" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                ISSUE_COUNT=$((ISSUE_COUNT + 1))
+              fi
+              if [ $USER_FAILED -gt 0 ]; then
+                echo "$ISSUE_COUNT. **Rate Limiting Issues** ($USER_FAILED tests)" >> $GITHUB_STEP_SUMMARY
+                echo " - Too aggressive rate limiting" >> $GITHUB_STEP_SUMMARY
+                echo " - Tests hitting rate limit too quickly" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                ISSUE_COUNT=$((ISSUE_COUNT + 1))
+              fi
+              if [ $SEC_FAILED -gt 0 ]; then
+                echo "$ISSUE_COUNT. **Security Issues** ($SEC_FAILED tests)" >> $GITHUB_STEP_SUMMARY
+                echo " - Session tokens exposed in stats" >> $GITHUB_STEP_SUMMARY
+                echo " - Session hijacking protection missing" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                ISSUE_COUNT=$((ISSUE_COUNT + 1))
+              fi
+              if [ $AUTH_FAILED -gt 0 ]; then
+                echo "$ISSUE_COUNT. **Logic Issues** ($AUTH_FAILED tests)" >> $GITHUB_STEP_SUMMARY
+                echo " - Logout behavior inconsistent" >> $GITHUB_STEP_SUMMARY
+                echo " - Session management issues" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                ISSUE_COUNT=$((ISSUE_COUNT + 1))
+              fi
+              if [ $PERF_FAILED -gt 0 ]; then
+                echo "$ISSUE_COUNT. **Performance Issues** ($PERF_FAILED tests)" >> $GITHUB_STEP_SUMMARY
+                echo " - Rate limiting not working as expected" >> $GITHUB_STEP_SUMMARY
+                echo " - Performance bottlenecks detected" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                ISSUE_COUNT=$((ISSUE_COUNT + 1))
+              fi
+
+              if [ $ISSUE_COUNT -eq 1 ]; then
+                echo "🎉 **No critical issues detected!**" >> $GITHUB_STEP_SUMMARY
+                echo "All test categories are performing well." >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+              fi
             fi
           fi
-        fi
-        
-        echo "## 📁 Test Reports" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "- **📊 HTML Report**: Detailed visual report in artifacts" >> $GITHUB_STEP_SUMMARY
-        echo "- **📋 JUnit XML**: Machine-readable test results" >> $GITHUB_STEP_SUMMARY
-        echo "- **📝 Console Output**: Full test execution logs" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## 📊 Test Coverage Analysis" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "This comprehensive test suite covers:" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "- **Authentication & Authorization**: Login/logout, session management" >> $GITHUB_STEP_SUMMARY
-        echo "- **CRUD Operations**: User creation, retrieval, updates, deletion" >> $GITHUB_STEP_SUMMARY
-        echo "- **Input Validation**: Data validation and error handling" >> $GITHUB_STEP_SUMMARY
-        echo "- **Security Testing**: XSS, SQL injection, session hijacking protection" >> $GITHUB_STEP_SUMMARY
-        echo "- **Performance Testing**: Rate limiting, concurrent requests, response times" >> $GITHUB_STEP_SUMMARY
-        echo "- **API Design**: Consistent behavior and proper HTTP status codes" >> $GITHUB_STEP_SUMMARY
-        
-    - name: Show test execution summary
-      if: always()
-      run: |
-        cd api_tests
-        echo "## 📋 Test Execution Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        if [ -f "test-results.xml" ]; then
-          echo "### ⏱️ Execution Details" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 📁 Test Reports" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Execution Time** | ~3-4 minutes |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Test Environment** | Ubuntu Latest |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Python Version** | 3.10 |" >> $GITHUB_STEP_SUMMARY
-          echo "| **API Server** | FastAPI + Uvicorn |" >> $GITHUB_STEP_SUMMARY
+          echo "- **📊 HTML Report**: Detailed visual report in artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- **📋 JUnit XML**: Machine-readable test results" >> $GITHUB_STEP_SUMMARY
+          echo "- **📝 Console Output**: Full test execution logs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        echo "### 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "1. **Download HTML Report** from artifacts for detailed analysis" >> $GITHUB_STEP_SUMMARY
-        echo "2. **Review failed tests** to understand API issues" >> $GITHUB_STEP_SUMMARY
-        echo "3. **Analyze test results** for quality improvement" >> $GITHUB_STEP_SUMMARY
-        echo "4. **Implement fixes** based on test findings" >> $GITHUB_STEP_SUMMARY
-        
-    - name: Upload test reports
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-reports-${{ github.run_number }}
-        path: |
-          api_tests/test-report.html
-          api_tests/test-results.xml
-        retention-days: 30
+
+          echo "## 📊 Test Coverage Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This comprehensive test suite covers:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Authentication & Authorization**: Login/logout, session management" >> $GITHUB_STEP_SUMMARY
+          echo "- **CRUD Operations**: User creation, retrieval, updates, deletion" >> $GITHUB_STEP_SUMMARY
+          echo "- **Input Validation**: Data validation and error handling" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Testing**: XSS, SQL injection, session hijacking protection" >> $GITHUB_STEP_SUMMARY
+          echo "- **Performance Testing**: Rate limiting, concurrent requests, response times" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Design**: Consistent behavior and proper HTTP status codes" >> $GITHUB_STEP_SUMMARY
+
+      - name: Show test execution summary
+        if: always()
+        run: |
+          cd api_tests
+          echo "## 📋 Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "test-results.xml" ]; then
+            echo "### ⏱️ Execution Details" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| **Execution Time** | ~3-4 minutes |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Test Environment** | Ubuntu Latest |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Python Version** | 3.10 |" >> $GITHUB_STEP_SUMMARY
+            echo "| **API Server** | FastAPI + Uvicorn |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "### 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Download HTML Report** from artifacts for detailed analysis" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Review failed tests** to understand API issues" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Analyze test results** for quality improvement" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Implement fixes** based on test findings" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ github.run_number }}
+          path: |
+            api_tests/test-report.html
+            api_tests/test-results.xml
+          retention-days: 30
