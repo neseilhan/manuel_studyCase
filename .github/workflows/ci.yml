@@ -1,4 +1,4 @@
-name: Test API
+name: Test API - Study Case
 
 on:
   push:
@@ -23,6 +23,7 @@ jobs:
       run: |
         pip install -r requirements.txt
         pip install -r api_tests/requirements_test.txt
+        pip install pytest-html pytest-xdist
         
     - name: Start API server
       run: |
@@ -32,7 +33,71 @@ jobs:
     - name: Seed test data
       run: python seed_data.py
         
-    - name: Run tests
+    - name: Run tests with reports
       run: |
         cd api_tests
-        python -m pytest test_classes/ -v
+        python -m pytest test_classes/ \
+          --html=test-report.html \
+          --self-contained-html \
+          --junitxml=test-results.xml \
+          -v \
+          --tb=short
+        
+    - name: Generate test summary
+      if: always()
+      run: |
+        cd api_tests
+        echo "# 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 📊 Test Statistics" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Extract test results from XML
+        if [ -f "test-results.xml" ]; then
+          TOTAL=$(grep -o 'tests="[0-9]*"' test-results.xml | grep -o '[0-9]*' | head -1)
+          FAILED=$(grep -o 'failures="[0-9]*"' test-results.xml | grep -o '[0-9]*' | head -1)
+          PASSED=$((TOTAL - FAILED))
+          SUCCESS_RATE=$((PASSED * 100 / TOTAL))
+          
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Total Tests** | $TOTAL |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Passed** | ✅ $PASSED |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Failed** | ❌ $FAILED |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Success Rate** | $SUCCESS_RATE% |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $FAILED -gt 0 ]; then
+            echo "## 🐛 Failed Tests" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The following tests failed (this is expected for a study case):" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Test File | Test Name |" >> $GITHUB_STEP_SUMMARY
+            echo "|-----------|-----------|" >> $GITHUB_STEP_SUMMARY
+            
+            # Extract failed test names
+            grep -o 'name="[^"]*"' test-results.xml | grep -o '"[^"]*"' | tr -d '"' | while read test; do
+              echo "| \`$test\` | Failed |" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        echo "## 📁 Test Reports" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **HTML Report**: Available in artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- **JUnit XML**: Available in artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 📝 Study Case Notes" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "This is a study case where test failures are expected and part of the learning process." >> $GITHUB_STEP_SUMMARY
+        echo "The failed tests help identify areas for improvement in the API implementation." >> $GITHUB_STEP_SUMMARY
+        
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-reports
+        path: |
+          api_tests/test-report.html
+          api_tests/test-results.xml
