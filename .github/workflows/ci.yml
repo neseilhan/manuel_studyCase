@@ -95,18 +95,23 @@ jobs:
           if [ $FAILED -gt 0 ]; then
             echo "## 🐛 Detailed Failed Tests" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "> **Note**: This is a study case where test failures are expected and part of the learning process." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
             
             # Extract failed tests with details
-            echo "### Authentication Tests" >> $GITHUB_STEP_SUMMARY
+            # Count actual failed tests from XML
+            AUTH_FAILED=$(grep -c 'test_auth.py.*failure' test-results.xml || echo "0")
+            USER_FAILED=$(grep -c 'test_users.py.*failure' test-results.xml || echo "0")
+            OTHER_FAILED=$(grep -c 'test_other.py.*failure' test-results.xml || echo "0")
+            SECURITY_FAILED=$(grep -c 'test_security.py.*failure' test-results.xml || echo "0")
+            PERFORMANCE_FAILED=$(grep -c 'test_performance.py.*failure' test-results.xml || echo "0")
+            
+            echo "### Authentication Tests ($AUTH_FAILED failed)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
             echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
             echo "| \`test_logout_invalid_token\` | AssertionError | 'No active session' in message | 'Logged out successfully' |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            echo "### User CRUD Tests" >> $GITHUB_STEP_SUMMARY
+            echo "### User CRUD Tests ($USER_FAILED failed)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
             echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
@@ -116,7 +121,7 @@ jobs:
             echo "| \`test_username_case_sensitivity\` | RateLimitError | 201 Created | 429 Too Many Requests |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            echo "### Search Tests" >> $GITHUB_STEP_SUMMARY
+            echo "### Search Tests ($OTHER_FAILED failed)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
             echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
@@ -129,7 +134,7 @@ jobs:
             echo "| \`test_search_users_invalid_field\` | HTTPError | 422 Validation Error | 400 Bad Request |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            echo "### Security Tests" >> $GITHUB_STEP_SUMMARY
+            echo "### Security Tests ($SECURITY_FAILED failed)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
             echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
@@ -138,7 +143,7 @@ jobs:
             echo "| \`test_information_disclosure\` | AssertionError | No session tokens | 5 tokens exposed |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            echo "### Performance Tests" >> $GITHUB_STEP_SUMMARY
+            echo "### Performance Tests ($PERFORMANCE_FAILED failed)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Test Name | Error Type | Expected | Actual |" >> $GITHUB_STEP_SUMMARY
             echo "|-----------|------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
@@ -149,7 +154,7 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Main Issues Identified:" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "1. **Rate Limiting Issues** (6 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "1. **Rate Limiting Issues** (4 tests)" >> $GITHUB_STEP_SUMMARY
             echo "   - Too aggressive rate limiting" >> $GITHUB_STEP_SUMMARY
             echo "   - Tests hitting rate limit too quickly" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -165,6 +170,9 @@ jobs:
             echo "   - Pagination returning +1 item" >> $GITHUB_STEP_SUMMARY
             echo "   - Logout behavior inconsistent" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
+            echo "5. **Performance Issues** (1 test)" >> $GITHUB_STEP_SUMMARY
+            echo "   - Rate limiting not working as expected" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
           fi
         fi
         
@@ -174,7 +182,7 @@ jobs:
         echo "- **📋 JUnit XML**: Machine-readable test results" >> $GITHUB_STEP_SUMMARY
         echo "- **📝 Console Output**: Full test execution logs" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## 📚 Study Case Learning Points" >> $GITHUB_STEP_SUMMARY
+        echo "## 📚 Learning Points" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "This test suite demonstrates common API issues:" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
