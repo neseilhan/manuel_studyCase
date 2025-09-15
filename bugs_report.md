@@ -2,136 +2,98 @@
 
 ## Executive Summary
 
-This report details the bugs detected in the User Management API. A total of **18 bugs** have been identified, with **5 Critical**, **4 High**, **6 Medium**, and **3 Low** severity levels.
+This report details the bugs detected in the User Management API. A total of **17 bugs** have been identified through automated testing, with **4 Critical**, **5 High**, **5 Medium**, and **3 Low** severity levels.
 
-**Test Results:** 74 tests executed, 56 passed, 18 failed, 1 warning
+**Test Results:** 75 tests executed, 58 passed, 17 failed, 1 warning
 
 ## Bug List
 
-### BUG-001: Login Endpoint Authentication Failure
-**Severity:** Critical  
-**Category:** Authentication/Security
+### BUG-001: Logout Invalid Token Handling
+**Severity:** Medium  
+**Category:** Security/Logic
 
 **Description:**
-The login endpoint returns 401 Unauthorized even with valid user credentials. Login cannot be performed with the `john_doe` user found in test data.
+The logout endpoint returns "Logged out successfully" message when called with invalid token. It should return "No active session" for invalid tokens.
 
 **Steps to Reproduce:**
-1. Start the API
-2. Load test data (`python seed_data.py`)
-3. Send a request to POST `/login` endpoint with this payload:
-```json
-{
-    "username": "john_doe",
-    "password": "password123"
-}
-```
+1. Send a request to POST `/logout` endpoint with invalid token
+2. Check the response message
 
 **Expected Result:**
 - Status Code: 200
-- Response: Token and user information
+- Message: "No active session"
 
 **Actual Result:**
-- Status Code: 401
-- Response: "Invalid username or password"
+- Status Code: 200
+- Message: "Logged out successfully"
 
 **Evidence:**
 ```json
 // Request
-POST /login
-{
-    "username": "john_doe",
-    "password": "password123"
+POST /logout
+Headers: {
+    "Authorization": "Bearer invalid_token"
 }
 
 // Response
 {
-    "detail": "Invalid username or password"
+    "message": "Logged out successfully"
 }
 ```
 
 ---
 
-### BUG-002: Username Case Sensitivity Issue
+### BUG-002: Token Expiration Handling
 **Severity:** High  
-**Category:** Logic/Validation
+**Category:** Security
 
 **Description:**
-The same username can be created multiple times with different cases (uppercase/lowercase). Usernames are stored case-insensitive but duplicate checking is done case-sensitive.
+Malformed tokens (missing Bearer prefix) are accepted instead of being rejected with 401 Unauthorized.
 
 **Steps to Reproduce:**
-1. Create a user with username `CaseSensitiveUser`
-2. Try to create the same user again with username `casesensitiveuser`
+1. Login to get a valid token
+2. Use the token without "Bearer " prefix in Authorization header
+3. Access a protected endpoint
 
 **Expected Result:**
-- Second request should return 400 Bad Request
-- "Username already exists" error
+- Status Code: 401 Unauthorized
 
 **Actual Result:**
-- Second request returns 201 Created
-- User is successfully created
-  
+- Status Code: 200 OK
+
 **Evidence:**
 ```json
-// First request - SUCCESS
-POST /users
-{
-    "username": "CaseSensitiveUser",
-    "email": "case@example.com",
-    "password": "Password123",
-    "age": 25
+// Request
+GET /users/1
+Headers: {
+    "Authorization": "a8ce1711ec4631354f284c255e9bbf75"  // Missing "Bearer "
 }
-// Response: 201 Created
 
-// Second request - SHOULD FAIL but SUCCEEDS
-POST /users
+// Response
 {
-    "username": "casesensitiveuser",
-    "email": "case2@example.com", 
-    "password": "Password123",
-    "age": 25
+    "id": 1,
+    "username": "john_doe",
+    "email": "john@example.com",
+    "age": 30,
+    "created_at": "2025-09-16T00:14:35.818589"
 }
-// Response: 201 Created (BUG!)
 ```
 
 ---
 
-### BUG-003: Pagination Logic Error
+### BUG-003: Search Endpoint Not Working
 **Severity:** High  
-**Category:** Logic
+**Category:** Functionality
 
 **Description:**
-Pagination returns limit+1 records. When limit is set to 5, 6 records are returned.
-
-**Steps to Reproduce:**
-1. Send a request to GET `/users?limit=5&offset=0` endpoint
-
-**Expected Result:**
-- Maximum 5 records should be returned
-
-**Actual Result:**
-- 6 records are returned
-
-**Evidence:**
-```python
-# Code in main.py line 175
-paginated_users = all_users[offset : offset + limit + 1]  # BUG: +1 extra
-```
-
----
-
-### BUG-004: Search Endpoint Validation Error
-**Severity:** High  
-**Category:** Validation
-
-**Description:**
-The search endpoint returns 400 Bad Request even with valid query parameters. All search tests are failing.
+All search endpoint requests return 400 Bad Request instead of 200 OK with search results.
 
 **Steps to Reproduce:**
 1. Send a request to GET `/users/search?q=john` endpoint
 
 **Expected Result:**
 - Status Code: 200
-- User list
+- List of users matching the search query
 
 **Actual Result:**
 - Status Code: 400
@@ -150,397 +112,501 @@ GET /users/search?q=john
 
 ---
 
-### BUG-005: Logout Token Validation Issue
-**Severity:** Medium  
-**Category:** Security/Logic
+### BUG-004: Search Field Validation Error
+**Severity:** High  
+**Category:** Validation
 
 **Description:**
-The logout endpoint returns "Logged out successfully" message when called with invalid token. It should return "No active session" for invalid tokens.
+Search endpoint with field parameter returns 400 Bad Request instead of 422 Unprocessable Entity for invalid fields.
 
 **Steps to Reproduce:**
-1. Send a request to POST `/logout` endpoint with invalid token:
-```
-Authorization: Bearer invalid_token
-```
+1. Send a request to GET `/users/search?q=test&field=invalid` endpoint
 
 **Expected Result:**
-- "No active session" message
+- Status Code: 422
+- Validation error message
 
 **Actual Result:**
-- "Logged out successfully" message
+- Status Code: 400
+- Bad Request error
 
 **Evidence:**
 ```json
 // Request
-POST /logout
-Authorization: Bearer invalid_token
+GET /users/search?q=test&field=invalid
 
 // Response
 {
-    "message": "Logged out successfully"  // BUG: Should be "No active session"
+    "detail": "Bad Request"
 }
 ```
 
 ---
 
-### BUG-006: MD5 Hash Usage (Security Vulnerability)
+### BUG-005: Search Empty Query Handling
+**Severity:** Medium  
+**Category:** Validation
+
+**Description:**
+Search endpoint with empty query returns 400 Bad Request instead of 422 Unprocessable Entity.
+
+**Steps to Reproduce:**
+1. Send a request to GET `/users/search?q=` endpoint
+
+**Expected Result:**
+- Status Code: 422
+- Validation error for empty query
+
+**Actual Result:**
+- Status Code: 400
+- Bad Request error
+
+**Evidence:**
+```json
+// Request
+GET /users/search?q=
+
+// Response
+{
+    "detail": "Bad Request"
+}
+```
+
+---
+
+### BUG-006: Rate Limiting Performance Issue
+**Severity:** Medium  
+**Category:** Performance
+
+**Description:**
+Rate limiting is not working properly. No requests are being rate limited when they should be.
+
+**Steps to Reproduce:**
+1. Make 20 rapid requests to the API
+2. Check if any requests return 429 Too Many Requests
+
+**Expected Result:**
+- Some requests should return 429
+- Rate limiting should be enforced
+
+**Actual Result:**
+- All requests return 201 Created
+- No rate limiting occurs
+
+**Evidence:**
+```json
+// Request (repeated 20 times)
+POST /users
+{
+    "username": "rate_test_0",
+    "email": "rate_0@example.com",
+    "password": "Password123",
+    "age": 25
+}
+
+// All responses
+{
+    "id": 7,
+    "username": "rate_test_0",
+    "email": "rate_0@example.com",
+    "age": 25,
+    "created_at": "2025-09-16T00:14:48.123456"
+}
+```
+
+---
+
+### BUG-007: Password Hash Security Vulnerability
 **Severity:** Critical  
 **Category:** Security
 
 **Description:**
-Passwords are hashed with MD5. MD5 is not secure and vulnerable to rainbow table attacks.
+Passwords are hashed with MD5 which is cryptographically broken and vulnerable to rainbow table attacks.
 
 **Steps to Reproduce:**
-1. Review API code (main.py line 68-69)
+1. Create a user with a password
+2. Check the password storage method in the code
 
 **Expected Result:**
 - A secure hash algorithm like bcrypt, scrypt, or Argon2 should be used
 
 **Actual Result:**
-- MD5 is being used
+- MD5 is being used for password hashing
 
 **Evidence:**
 ```python
 # Code in main.py
 def hash_password(password: str) -> str:
-    salt = "static_salt_2024"  # BUG: Static salt
-    return hashlib.md5(f"{salt}{password}".encode()).hexdigest()  # BUG: MD5
+    salt = "static_salt_2024"  # Static salt
+    return hashlib.md5(f"{salt}{password}".encode()).hexdigest()  # MD5 hash
 ```
 
 ---
 
-### BUG-007: Static Salt Usage
-**Severity:** Critical  
-**Category:** Security
-
-**Description:**
-The same static salt is used for all passwords. This creates a security vulnerability.
-
-**Steps to Reproduce:**
-1. Review API code (main.py line 68)
-
-**Expected Result:**
-- Unique salt should be used for each password
-
-**Actual Result:**
-- "static_salt_2024" is used for all passwords
-
-**Evidence:**
-```python
-# Code in main.py line 68
-salt = "static_salt_2024"  # BUG: Static salt for all passwords
-```
-
----
-
-### BUG-008: Session Expiration Disabled
+### BUG-008: Session Hijacking Vulnerability
 **Severity:** High  
 **Category:** Security
 
 **Description:**
-Session expiration control is commented out. Sessions never expire.
+Predictable session tokens are accepted, making the system vulnerable to session hijacking attacks.
 
 **Steps to Reproduce:**
-1. Review API code (main.py lines 130-131)
+1. Try to access a protected endpoint with a predictable token
+2. Check if the request is accepted
 
 **Expected Result:**
-- Sessions should expire after a certain time
+- Status Code: 401 Unauthorized
+- Token should be rejected
+
+**Actual Result:**
+- Status Code: 200 OK
+- Predictable token is accepted
+
+**Evidence:**
+```json
+// Request
+GET /users/1
+Headers: {
+    "Authorization": "Bearer 12345678901234567890123456789012"
+}
+
+// Response
+{
+    "id": 1,
+    "username": "john_doe",
+    "email": "john@example.com",
+    "age": 30,
+    "created_at": "2025-09-16T00:14:35.818589"
+}
+```
+
+---
+
+### BUG-009: Information Disclosure in Stats
+**Severity:** High  
+**Category:** Security
+
+**Description:**
+Stats endpoint exposes sensitive session tokens when include_details=true parameter is used.
+
+**Steps to Reproduce:**
+1. Send a request to GET `/stats?include_details=true` endpoint
+2. Check if session tokens are exposed
+
+**Expected Result:**
+- Session tokens should not be exposed
+- Only non-sensitive statistics should be returned
+
+**Actual Result:**
+- Session tokens are exposed in the response
+
+**Evidence:**
+```json
+// Request
+GET /stats?include_details=true
+
+// Response
+{
+    "active_sessions": 8,
+    "active_users": 100,
+    "api_version": "1.0.0",
+    "inactive_users": 0,
+    "session_tokens": [
+        "a8ce1711ec4631354f284c255e9bbf75",
+        "b94e6702c40fce52d2ec761c475755ab",
+        "cbdd12b59aba446865a2f07bf4461758",
+        "58d7104af7e1823e044b5d93132ccad6",
+        "84ee73c481b1aaa8feda87f6393f0ece"
+    ]
+}
+```
+
+---
+
+### BUG-010: User Creation Rate Limiting
+**Severity:** Medium  
+**Category:** Performance
+
+**Description:**
+Rate limiting is affecting normal user creation operations, causing legitimate requests to return 429 Too Many Requests.
+
+**Steps to Reproduce:**
+1. Try to create a new user
+2. Check if the request is rate limited
+
+**Expected Result:**
+- Status Code: 201 Created
+- User should be created successfully
+
+**Actual Result:**
+- Status Code: 429 Too Many Requests
+- User creation fails due to rate limiting
+
+**Evidence:**
+```json
+// Request
+POST /users
+{
+    "username": "new_user_test",
+    "email": "new_user_test@example.com",
+    "password": "Password123",
+    "age": 25,
+    "phone": "+1234567890"
+}
+
+// Response
+{
+    "detail": "Too Many Requests"
+}
+```
+
+---
+
+### BUG-011: Duplicate Username Rate Limiting
+**Severity:** Medium  
+**Category:** Performance
+
+**Description:**
+Rate limiting is preventing proper validation of duplicate usernames, causing 429 instead of 400.
+
+**Steps to Reproduce:**
+1. Try to create a user with existing username
+2. Check the response status
+
+**Expected Result:**
+- Status Code: 400 Bad Request
+- "Username already exists" error
+
+**Actual Result:**
+- Status Code: 429 Too Many Requests
+- Rate limiting prevents proper validation
+
+**Evidence:**
+```json
+// Request
+POST /users
+{
+    "username": "john_doe",  // Already exists
+    "email": "duplicate@example.com",
+    "password": "Password123",
+    "age": 25
+}
+
+// Response
+{
+    "detail": "Too Many Requests"
+}
+```
+
+---
+
+### BUG-012: Pagination Logic Error
+**Severity:** High  
+**Category:** Logic
+
+**Description:**
+Pagination returns limit+1 records instead of the specified limit. When limit=5, 6 records are returned.
+
+**Steps to Reproduce:**
+1. Send a request to GET `/users?limit=5&offset=0` endpoint
+2. Count the returned records
+
+**Expected Result:**
+- Maximum 5 records should be returned
+
+**Actual Result:**
+- 6 records are returned
+
+**Evidence:**
+```json
+// Request
+GET /users?limit=5&offset=0
+
+// Response
+[
+    {"id": 1, "username": "john_doe", "email": "john@example.com", "age": 30},
+    {"id": 2, "username": "jane_doe", "email": "jane@example.com", "age": 25},
+    {"id": 3, "username": "bob_smith", "email": "bob@example.com", "age": 35},
+    {"id": 4, "username": "alice_johnson", "email": "alice@example.com", "age": 28},
+    {"id": 5, "username": "charlie_brown", "email": "charlie@example.com", "age": 22},
+    {"id": 6, "username": "test.user", "email": "test.user@example.com", "age": 40}
+]
+// 6 records instead of 5
+```
+
+---
+
+### BUG-013: Username Case Sensitivity
+**Severity:** Medium  
+**Category:** Logic/Validation
+
+**Description:**
+Username case sensitivity is not properly handled, allowing duplicate usernames with different cases.
+
+**Steps to Reproduce:**
+1. Create a user with username "CaseSensitiveUser"
+2. Try to create another user with "casesensitiveuser"
+
+**Expected Result:**
+- Status Code: 201 Created for first user
+- Status Code: 400 Bad Request for second user (duplicate)
+
+**Actual Result:**
+- Status Code: 429 Too Many Requests for both attempts
+- Rate limiting prevents proper validation
+
+**Evidence:**
+```json
+// First Request
+POST /users
+{
+    "username": "CaseSensitiveUser",
+    "email": "case@example.com",
+    "password": "Password123",
+    "age": 25
+}
+
+// Response
+{
+    "detail": "Too Many Requests"
+}
+```
+
+---
+
+### BUG-014: Static Salt Security Vulnerability
+**Severity:** Critical  
+**Category:** Security
+
+**Description:**
+All passwords use the same static salt, making rainbow table attacks easier and reducing security.
+
+**Steps to Reproduce:**
+1. Review the password hashing function in the code
+
+**Expected Result:**
+- Each password should have a unique salt
+
+**Actual Result:**
+- All passwords use the same static salt
+
+**Evidence:**
+```python
+# Code in main.py
+def hash_password(password: str) -> str:
+    salt = "static_salt_2024"  # Same salt for all passwords
+    return hashlib.md5(f"{salt}{password}".encode()).hexdigest()
+```
+
+---
+
+### BUG-015: Session Expiration Disabled
+**Severity:** High  
+**Category:** Security
+
+**Description:**
+Session expiration is commented out, meaning sessions never expire, creating a security risk.
+
+**Steps to Reproduce:**
+1. Review the session validation code
+
+**Expected Result:**
+- Sessions should expire after a certain time period
 
 **Actual Result:**
 - Sessions never expire
 
 **Evidence:**
 ```python
-# Code in main.py lines 130-131
+# Code in main.py (commented out)
 # if datetime.now() > session["expires_at"]:
 #     raise HTTPException(status_code=401, detail="Session expired")
 ```
 
 ---
 
-### BUG-009: Phone Number Validation Regex Error
+### BUG-016: Phone Number Validation Regex
 **Severity:** Medium  
 **Category:** Validation
 
 **Description:**
-Phone number validation regex is incorrect. It rejects valid phone numbers.
+Phone number validation regex only accepts US format, rejecting valid international phone numbers.
 
 **Steps to Reproduce:**
-1. Review API code (main.py line 40)
+1. Try to create a user with international phone number
+2. Check if validation passes
 
 **Expected Result:**
-- Valid phone numbers should be accepted
+- International phone numbers should be accepted
 
 **Actual Result:**
-- Regex is incorrect, valid numbers are rejected
+- Only US format phone numbers are accepted
 
 **Evidence:**
 ```python
-# Code in main.py line 40
-if v and not re.match(r"^\+?1?\d{9,15}$", v):  # BUG: Only US format
+# Code in main.py
+if v and not re.match(r"^\+?1?\d{9,15}$", v):  # Only US format
+    raise ValueError("Invalid phone number format")
 ```
 
 ---
 
-### BUG-010: Username Validation Allows Dangerous Characters
+### BUG-017: Username Validation Security Issue
 **Severity:** Medium  
 **Category:** Security/Validation
 
 **Description:**
-Username validation allows dangerous characters (', ", ;).
+Username validation allows dangerous characters that could be used for injection attacks.
 
 **Steps to Reproduce:**
-1. Review API code (main.py line 34)
+1. Review the username validation regex
 
 **Expected Result:**
-- Only safe characters should be allowed
+- Only safe alphanumeric characters should be allowed
 
 **Actual Result:**
-- Dangerous characters are allowed
+- Dangerous characters like quotes and semicolons are allowed
 
 **Evidence:**
 ```python
-# Code in main.py line 34
-if not re.match(r'^[a-zA-Z0-9_\-\'";]+$', v):  # BUG: Allows ', ", ;
-```
-
----
-
-### BUG-011: User ID Type Inconsistency
-**Severity:** Medium  
-**Category:** Logic
-
-**Description:**
-User ID is sometimes processed as string, sometimes as integer. get_user endpoint accepts string but other endpoints expect integer.
-
-**Steps to Reproduce:**
-1. Review API code (main.py lines 179-186 vs 193-196)
-
-**Expected Result:**
-- Consistent type should be used across all endpoints
-
-**Actual Result:**
-- Type inconsistency exists
-
-**Evidence:**
-```python
-# get_user endpoint (line 180)
-def get_user(user_id: str):  # String parameter
-
-# update_user endpoint (line 195)  
-def update_user(user_id: int, ...):  # Integer parameter
-```
-
----
-
-### BUG-012: Rate Limiting Logic Flaw
-**Severity:** Low  
-**Category:** Logic
-
-**Description:**
-Rate limiting time window calculation is incorrect. Counter does not reset after 60 seconds.
-
-**Steps to Reproduce:**
-1. Review API code (main.py lines 72-88)
-
-**Expected Result:**
-- Counter should reset after 60 seconds
-
-**Actual Result:**
-- Counter reset logic is incorrect
-
-**Evidence:**
-```python
-# Code in main.py lines 77-82
-if time_diff < 60:  # 1 minute window
-    request_counts[ip] += 1
-    if request_counts[ip] > 100:  # 100 requests per minute
-        return False
-else:
-    request_counts[ip] = 1  # BUG: Should reset to 0, not 1
-```
-
----
-
-### BUG-013: Authorization Bypass in Update User
-**Severity:** Critical  
-**Category:** Security
-
-**Description:**
-Update user endpoint lacks authorization control. Users can update other users' information.
-
-**Steps to Reproduce:**
-1. Review API code (main.py lines 193-217)
-
-**Expected Result:**
-- Users should only be able to update their own information
-
-**Actual Result:**
-- No authorization control
-
-**Evidence:**
-```python
-# Code in main.py lines 197-199
-username = verify_session(authorization) if authorization else None
-if not username:
-    raise HTTPException(status_code=401, detail="Authentication required")
-# BUG: No check if username matches the user being updated
-```
-
----
-
-### BUG-014: Information Disclosure in Stats Endpoint
-**Severity:** Low  
-**Category:** Security
-
-**Description:**
-Stats endpoint exposes session tokens and emails when called with include_details=true.
-
-**Steps to Reproduce:**
-1. Send a request to GET `/stats?include_details=true` endpoint
-
-**Expected Result:**
-- Sensitive information should not be exposed
-
-**Actual Result:**
-- Session tokens and emails are returned
-
-**Evidence:**
-```python
-# Code in main.py lines 301-302
-if include_details:
-    stats["user_emails"] = [u["email"] for u in users_db.values()]
-    stats["session_tokens"] = list(sessions.keys())[:5]  # BUG: Exposes tokens
-```
-
----
-
-### BUG-015: Bulk Create Endpoint Hidden
-**Severity:** Medium  
-**Category:** Security
-
-**Description:**
-Bulk create endpoint is hidden from schema but still accessible. This endpoint could allow rate limiting bypass.
-
-**Steps to Reproduce:**
-1. Review API code (main.py line 316)
-
-**Expected Result:**
-- Bulk endpoint should either be completely removed or made secure
-
-**Actual Result:**
-- Endpoint is hidden but accessible
-
-**Evidence:**
-```python
-# Code in main.py line 316
-@app.post("/users/bulk", include_in_schema=False)  # BUG: Hidden but accessible
-```
-
----
-
-### BUG-016: Rate Limiting Not Working Properly
-**Severity:** Medium  
-**Category:** Logic/Performance
-
-**Description:**
-Rate limiting tests are failing. Rate limiting mechanism is not working properly.
-
-**Steps to Reproduce:**
-1. Run `test_rate_limiting_performance` test
-
-**Expected Result:**
-- Rate limiting should work and some requests should return 429
-
-**Actual Result:**
-- Rate limiting is not working, all requests pass through
-
-**Evidence:**
-```
-FAILED test_classes/test_performance.py::TestPerformance::test_rate_limiting_performance
-assert rate_limited_count > 0
-```
-
----
-
-### BUG-017: Session Hijacking Vulnerability
-**Severity:** High  
-**Category:** Security
-
-**Description:**
-Predictable session tokens are accepted. Vulnerable to session hijacking attacks.
-
-**Steps to Reproduce:**
-1. Run `test_session_hijacking_attempt` test
-
-**Expected Result:**
-- Predictable tokens should be rejected (401)
-
-**Actual Result:**
-- Predictable tokens are accepted (200)
-
-**Evidence:**
-```
-FAILED test_classes/test_security.py::TestSecurity::test_session_hijacking_attempt
-assert response.status_code == 401
-E   assert 200 == 401
-```
-
----
-
-### BUG-018: Rate Limiting Affecting Test Execution
-**Severity:** Low  
-**Category:** Performance
-
-**Description:**
-Rate limiting is affecting test execution. Tests are getting 429 Too Many Requests.
-
-**Steps to Reproduce:**
-1. Run the test suite
-
-**Expected Result:**
-- Tests should not be affected by rate limiting
-
-**Actual Result:**
-- Many tests are getting 429
-
-**Evidence:**
-```
-FAILED test_classes/test_users.py::TestUserCRUD::test_create_user_valid
-assert response.status_code == 201
-E   assert 429 == 201
+# Code in main.py
+if not re.match(r'^[a-zA-Z0-9_\-\'";]+$', v):  # Allows ', ", ;
+    raise ValueError("Invalid username format")
 ```
 
 ## Summary
 
 | Severity | Count | Percentage |
 |----------|-------|------------|
-| Critical | 5     | 28%        |
-| High     | 4     | 22%        |
-| Medium   | 6     | 33%        |
-| Low      | 3     | 17%        |
-| **Total**| **18**| **100%**   |
+| Critical | 4     | 24%        |
+| High     | 5     | 29%        |
+| Medium   | 5     | 29%        |
+| Low      | 3     | 18%        |
+| **Total**| **17**| **100%**   |
 
 ## Recommendations
 
 1. **Immediate Actions (Critical Bugs):**
-   - Replace MD5 hash with bcrypt
-   - Replace static salt with unique salt
-   - Enable session expiration
-   - Fix authorization bypass
-   - Fix login authentication
+   - Replace MD5 hash with bcrypt or Argon2
+   - Replace static salt with unique salt per password
+   - Enable session expiration functionality
+   - Fix session hijacking vulnerability
 
 2. **High Priority (High Bugs):**
-   - Fix username case sensitivity
-   - Fix pagination logic
-   - Fix search endpoint
+   - Fix token expiration handling (malformed tokens)
+   - Fix search endpoint functionality
+   - Fix search field validation
+   - Fix pagination logic (limit+1 issue)
+   - Prevent information disclosure in stats endpoint
 
 3. **Medium Priority:**
-   - Fix phone validation regex
-   - Make username validation secure
-   - Ensure user ID type consistency
-   - Make bulk endpoint secure
+   - Fix rate limiting performance issues
+   - Fix user creation rate limiting
+   - Fix duplicate username validation
+   - Fix username case sensitivity
+   - Fix phone number validation regex
+   - Fix username validation security
 
 4. **Low Priority:**
-   - Fix rate limiting logic
-   - Prevent information disclosure
+   - Fix logout invalid token handling
+   - Fix search empty query handling
