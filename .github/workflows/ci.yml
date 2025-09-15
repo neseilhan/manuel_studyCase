@@ -36,8 +36,13 @@ jobs:
     - name: Run tests with detailed reports
       run: |
         cd api_tests
+        
+        # Remove old reports to ensure fresh generation
+        rm -f test-report.html test-results.xml
+        
         echo "🧪 Starting test execution..."
         echo "📊 Running 74 tests across 5 categories..."
+        echo "🕐 Timestamp: $(date)"
         echo ""
         
         python -m pytest test_classes/ \
