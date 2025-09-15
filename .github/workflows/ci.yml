@@ -45,6 +45,9 @@ jobs:
         echo "🕐 Timestamp: $(date)"
         echo ""
         
+        # Record start time
+        echo "TEST_START_TIME=$(date +%s)" >> $GITHUB_ENV
+        
         python -m pytest test_classes/ \
           --html=test-report.html \
           --self-contained-html \
@@ -60,6 +63,9 @@ jobs:
         echo "📁 Reports generated:"
         echo "   - test-report.html (Visual report)"
         echo "   - test-results.xml (JUnit format)"
+        
+        # Record end time
+        echo "TEST_END_TIME=$(date +%s)" >> $GITHUB_ENV
         
     - name: Generate detailed test summary
       if: always()
@@ -293,7 +299,21 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Execution Time** | ~3-4 minutes |" >> $GITHUB_STEP_SUMMARY
+          
+          # Calculate actual execution time
+          if [ -n "$TEST_START_TIME" ] && [ -n "$TEST_END_TIME" ]; then
+            EXECUTION_DURATION=$((TEST_END_TIME - TEST_START_TIME))
+            MINUTES=$((EXECUTION_DURATION / 60))
+            SECONDS=$((EXECUTION_DURATION % 60))
+            if [ $MINUTES -gt 0 ]; then
+              EXECUTION_TIME="${MINUTES}m ${SECONDS}s"
+            else
+              EXECUTION_TIME="${SECONDS}s"
+            fi
+          else
+            EXECUTION_TIME="~3-4 minutes (estimated)"
+          fi
+          echo "| **Execution Time** | $EXECUTION_TIME |" >> $GITHUB_STEP_SUMMARY
           echo "| **Test Environment** | Ubuntu Latest |" >> $GITHUB_STEP_SUMMARY
           echo "| **Python Version** | 3.10 |" >> $GITHUB_STEP_SUMMARY
           echo "| **API Server** | FastAPI + Uvicorn |" >> $GITHUB_STEP_SUMMARY
