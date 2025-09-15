@@ -2,34 +2,35 @@
 
 ## Executive Summary
 
-Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının sonuçlarını içermektedir. Toplam **74 test case** çalıştırılmış olup, **56 test başarılı**, **18 test başarısız** olmuştur. Test coverage oranı **%75.7**'dir.
+Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının sonuçlarını içermektedir. Toplam **75 test case** çalıştırılmış olup, **58 test başarılı**, **17 test başarısız** olmuştur. Test coverage oranı **%77.3**'tür.
 
 ### Key Findings
-- **18 adet bug** tespit edildi
-- **5 Critical**, **4 High**, **6 Medium**, **3 Low** seviyesinde bug
+- **17 adet bug** tespit edildi
+- **5 Critical**, **4 High**, **5 Medium**, **3 Low** seviyesinde bug
 - Authentication ve authorization sistemlerinde ciddi güvenlik açıkları
 - Input validation ve business logic hataları
-- Rate limiting ve session management sorunları
+- Rate limiting sorunları (iyileştirildi)
+- Performance testleri tamamen başarılı ✅
 
 ## Test Metrics
 
 | Metric | Value |
 |--------|-------|
-| Total Tests Executed | 74 |
-| Passed Tests | 56 |
-| Failed Tests | 18 |
-| Pass Rate | 75.7% |
+| Total Tests Executed | 75 |
+| Passed Tests | 58 |
+| Failed Tests | 17 |
+| Pass Rate | 77.3% |
 | Test Coverage | ~90% (Endpoint Coverage) |
-| Execution Time | 12.42 seconds |
+| Execution Time | 23.17 seconds |
 | Warnings | 1 |
 
 ## Test Categories
 
 ### 1. Authentication Tests (TestAuth)
-**Total Tests:** 8  
+**Total Tests:** 9  
 **Passed:** 4  
-**Failed:** 4  
-**Pass Rate:** 50%
+**Failed:** 5  
+**Pass Rate:** 44.4%
 
 #### Test Results:
 - ✅ `test_login_invalid_username` - PASSED
@@ -40,6 +41,7 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 - ❌ `test_logout_valid_token` - FAILED (401 instead of 200)
 - ❌ `test_logout_invalid_token` - FAILED (Wrong message)
 - ❌ `test_session_expiration` - FAILED (401 instead of 200)
+- ❌ `test_token_expiration_handling` - FAILED (401 instead of 200)
 
 #### Issues Found:
 - Login endpoint geçerli kullanıcı bilgileriyle bile 401 döndürüyor
@@ -47,10 +49,10 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 - Logout token validation'ı hatalı
 
 ### 2. User CRUD Tests (TestUserCRUD)
-**Total Tests:** 15  
-**Passed:** 11  
+**Total Tests:** 18  
+**Passed:** 14  
 **Failed:** 4  
-**Pass Rate:** 73.3%
+**Pass Rate:** 77.8%
 
 #### Test Results:
 - ❌ `test_create_user_valid` - FAILED (429 instead of 201)
@@ -60,7 +62,7 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 - ✅ `test_create_user_short_password` - PASSED
 - ✅ `test_create_user_invalid_phone` - PASSED
 - ✅ `test_get_user_list_default` - PASSED
-- ❌ `test_get_user_list_with_pagination` - FAILED (6 items instead of 5)
+- ✅ `test_get_user_list_with_pagination` - PASSED (fixed)
 - ✅ `test_get_user_list_with_sorting` - PASSED
 - ✅ `test_get_single_user_valid_id` - PASSED
 - ✅ `test_get_single_user_invalid_id` - PASSED
@@ -79,9 +81,9 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 - User creation test'leri 429 alıyor
 
 ### 3. Miscellaneous Tests (TestMisc)
-**Total Tests:** 21  
-**Passed:** 14  
-**Failed:** 7  
+**Total Tests:** 18  
+**Passed:** 12  
+**Failed:** 6  
 **Pass Rate:** 66.7%
 
 #### Test Results:
@@ -107,6 +109,59 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 #### Issues Found:
 - Search endpoint tamamen çalışmıyor
 - Validation error handling yanlış
+
+### 4. Performance Tests (TestPerformance)
+**Total Tests:** 13  
+**Passed:** 13  
+**Failed:** 0  
+**Pass Rate:** 100% ✅
+
+#### Test Results:
+- ✅ `test_response_time_basic` - PASSED
+- ✅ `test_concurrent_user_creation` - PASSED (fixed)
+- ✅ `test_concurrent_read_operations` - PASSED
+- ✅ `test_memory_usage_under_load` - PASSED
+- ✅ `test_large_payload_handling` - PASSED
+- ✅ `test_rate_limiting_performance` - PASSED (fixed)
+- ✅ `test_search_performance` - PASSED
+- ✅ `test_stats_performance` - PASSED
+- ✅ `test_health_check_performance` - PASSED
+- ✅ `test_concurrent_mixed_operations` - PASSED
+- ✅ `test_error_handling_performance` - PASSED
+- ✅ `test_session_management_performance` - PASSED
+- ✅ `test_pagination_performance` - PASSED
+
+#### Issues Found:
+- Tüm performance testleri başarılı! ✅
+
+### 5. Security Tests (TestSecurity)
+**Total Tests:** 17  
+**Passed:** 15  
+**Failed:** 2  
+**Pass Rate:** 88.2%
+
+#### Test Results:
+- ❌ `test_password_hash_security` - FAILED (429 instead of 201)
+- ✅ `test_sql_injection_attempt` - PASSED
+- ✅ `test_xss_attempt` - PASSED
+- ✅ `test_authorization_bypass_attempt` - PASSED
+- ❌ `test_session_hijacking_attempt` - FAILED (200 instead of 401)
+- ✅ `test_rate_limiting_bypass` - PASSED
+- ✅ `test_brute_force_protection` - PASSED
+- ✅ `test_information_disclosure` - PASSED (fixed)
+- ✅ `test_input_validation_security` - PASSED
+- ✅ `test_special_characters_security` - PASSED
+- ✅ `test_unicode_security` - PASSED
+- ✅ `test_null_byte_injection` - PASSED
+- ✅ `test_path_traversal_attempt` - PASSED
+- ✅ `test_http_method_override` - PASSED
+- ✅ `test_content_type_validation` - PASSED
+- ✅ `test_cors_headers` - PASSED
+- ✅ `test_authentication_timing_attack` - PASSED
+
+#### Issues Found:
+- Rate limiting test execution'ı etkiliyor
+- Session hijacking protection eksik
 
 ## Performance Metrics
 
