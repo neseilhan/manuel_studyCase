@@ -88,8 +88,8 @@ jobs:
           # Test categories breakdown - dynamic from XML
           echo "## 📋 Test Categories" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| 🏷️ Category | 🔢 Total | ✅ Passed | ❌ Failed | 📊 Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------------|----------|-----------|-----------|-----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Category | Total | Passed | Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
           
             # Extract actual test counts from XML for each category
             AUTH_TOTAL=$(grep -c 'test_auth.py::' test-results.xml 2>/dev/null || echo "0")
@@ -106,40 +106,20 @@ jobs:
           PERF_PASSED=$((PERF_TOTAL - PERF_FAILED))
           OTHER_PASSED=$((OTHER_TOTAL - OTHER_FAILED))
           
-          # Authentication row
-          if [ $AUTH_FAILED -eq 0 ]; then
-            echo "|**Authentication** | $AUTH_TOTAL | ✅ $AUTH_PASSED | ❌ $AUTH_FAILED | 🟢 All Passed |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "|**Authentication** | $AUTH_TOTAL | ✅ $AUTH_PASSED | ❌ $AUTH_FAILED | 🔴 $AUTH_FAILED Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          # User CRUD row
-          if [ $USER_FAILED -eq 0 ]; then
-            echo "|**User CRUD** | $USER_TOTAL | ✅ $USER_PASSED | ❌ $USER_FAILED | 🟢 All Passed |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "|**User CRUD** | $USER_TOTAL | ✅ $USER_PASSED | ❌ $USER_FAILED | 🔴 $USER_FAILED Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          # Security row
-          if [ $SEC_FAILED -eq 0 ]; then
-            echo "|**Security** | $SEC_TOTAL | ✅ $SEC_PASSED | ❌ $SEC_FAILED | 🟢 All Passed |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "|**Security** | $SEC_TOTAL | ✅ $SEC_PASSED | ❌ $SEC_FAILED | 🔴 $SEC_FAILED Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          # Performance row
-          if [ $PERF_FAILED -eq 0 ]; then
-            echo "|**Performance** | $PERF_TOTAL | ✅ $PERF_PASSED | ❌ $PERF_FAILED | 🟢 All Passed |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "|**Performance** | $PERF_TOTAL | ✅ $PERF_PASSED | ❌ $PERF_FAILED | 🔴 $PERF_FAILED Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          # Other row
-          if [ $OTHER_FAILED -eq 0 ]; then
-            echo "|**Other** | $OTHER_TOTAL | ✅ $OTHER_PASSED | ❌ $OTHER_FAILED | 🟢 All Passed |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "|**Other** | $OTHER_TOTAL | ✅ $OTHER_PASSED | ❌ $OTHER_FAILED | 🔴 $OTHER_FAILED Failed |" >> $GITHUB_STEP_SUMMARY
-          fi
+            # Authentication row
+            echo "| **Authentication** | $AUTH_TOTAL | $AUTH_PASSED | $AUTH_FAILED |" >> $GITHUB_STEP_SUMMARY
+            
+            # User CRUD row
+            echo "| **User CRUD** | $USER_TOTAL | $USER_PASSED | $USER_FAILED |" >> $GITHUB_STEP_SUMMARY
+            
+            # Security row
+            echo "| **Security** | $SEC_TOTAL | $SEC_PASSED | $SEC_FAILED |" >> $GITHUB_STEP_SUMMARY
+            
+            # Performance row
+            echo "| **Performance** | $PERF_TOTAL | $PERF_PASSED | $PERF_FAILED |" >> $GITHUB_STEP_SUMMARY
+            
+            # Other row
+            echo "| **Other** | $OTHER_TOTAL | $OTHER_PASSED | $OTHER_FAILED |" >> $GITHUB_STEP_SUMMARY
           
           echo "" >> $GITHUB_STEP_SUMMARY
           
