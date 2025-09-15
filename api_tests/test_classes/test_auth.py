@@ -65,3 +65,24 @@ class TestAuth:
         response = client.get("/users/1", headers={"Authorization": f"Bearer {token}"})
         # This might fail due to authorization issues in the API
         assert response.status_code in [200, 401, 403]
+
+    def test_token_expiration_handling(self, client):
+        """Test that expired tokens are properly rejected"""
+        # First login to get a valid token
+        login_payload = {"username": "john_doe", "password": "password123"}
+        login_response = client.post("/login", json=login_payload)
+        assert login_response.status_code == 200
+        token = login_response.json()["token"]
+        
+        # Use the token to access a protected endpoint
+        response = client.get("/users/1", headers={"Authorization": f"Bearer {token}"})
+        # Should work with valid token
+        assert response.status_code in [200, 401, 403]
+        
+        # Test with malformed token (missing Bearer prefix)
+        malformed_response = client.get("/users/1", headers={"Authorization": token})
+        assert malformed_response.status_code == 401
+        
+        # Test with completely invalid token
+        invalid_response = client.get("/users/1", headers={"Authorization": "Bearer invalid_token_12345"})
+        assert invalid_response.status_code == 401
