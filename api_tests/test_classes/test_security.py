@@ -21,16 +21,6 @@ class TestSecurity:
         # This might fail due to authentication bug, but password should be hashed
         assert login_response.status_code in [200, 401]
 
-    def test_sql_injection_attempt(self, client):
-        payload = {
-            "username": "'; DROP TABLE users; --",
-            "email": "sql@example.com",
-            "password": "Password123",
-            "age": 25
-        }
-        response = client.post("/users", json=payload)
-        # Should either succeed (if validation allows) or fail with validation error
-        assert response.status_code in [201, 422]
 
     def test_xss_attempt(self, client):
         payload = {

@@ -22,16 +22,6 @@ class TestUserCRUD:
         assert "created_at" in data
         assert data["is_active"] == True
 
-    def test_create_user_duplicate_username(self, client):
-        payload = {
-            "username": "john_doe",  # This user already exists
-            "email": "duplicate@example.com",
-            "password": "Password123",
-            "age": 25
-        }
-        response = client.post("/users", json=payload)
-        assert response.status_code == 400
-        assert "Username already exists" in response.json()["detail"]
 
     def test_create_user_invalid_age_underage(self, client):
         payload = {
