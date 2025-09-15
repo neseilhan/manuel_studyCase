@@ -2,13 +2,7 @@
 
 ## Overview
 
-Bu dokümantasyon, User Management API'si için yazılan test suite'inin nasıl çalıştırılacağını açıklar. Test suite pytest framework'ü kullanılarak yazılmıştır ve 75 test case içerir.
-
-**Güncel Test Durumu:**
-- 58 test başarılı (%77.3)
-- 17 test başarısız (%22.7)
-- 1 uyarı
-- 17 bug tespit edildi
+This documentation explains how to run the test suite written for the User Management API. The test suite is written using the pytest framework and contains 74 test cases.
 
 ## Prerequisites
 
@@ -26,13 +20,13 @@ Bu dokümantasyon, User Management API'si için yazılan test suite'inin nasıl 
 
 ### 1. Install Main Dependencies
 ```bash
-# Ana proje dizininde
+# In the main project directory
 pip install -r requirements.txt
 ```
 
 ### 2. Install Test Dependencies
 ```bash
-# Test dizininde
+# In the test directory
 cd api_tests
 pip install -r requirements_test.txt
 ```
@@ -41,31 +35,31 @@ pip install -r requirements_test.txt
 
 ### 1. Start the API Server
 ```bash
-# Ana proje dizininde
+# In the main project directory
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-API server'ı başlattıktan sonra şu URL'lerde erişilebilir:
+After starting the API server, it will be accessible at these URLs:
 - API Documentation: http://localhost:8000/docs
 - Alternative Docs: http://localhost:8000/redoc
 
 ### 2. Seed Test Data
 ```bash
-# Ana proje dizininde (yeni terminal)
+# In the main project directory (new terminal)
 python seed_data.py
 ```
 
-Bu komut test için gerekli kullanıcı verilerini oluşturur:
+This command creates the necessary user data for testing:
 - Username: `john_doe`, Password: `password123`
 - Username: `jane_smith`, Password: `securepass456`
 - Username: `admin_user`, Password: `Admin@2024`
-- Ve diğer test kullanıcıları...
+- And other test users...
 
 ## Running Tests
 
 ### 1. Run All Tests
 ```bash
-# api_tests dizininde
+# In the api_tests directory
 cd api_tests
 python -m pytest test_classes/ -v
 ```
@@ -130,52 +124,43 @@ test_classes/test_auth.py::TestAuth::test_login_invalid_username PASSED    [  2%
 test_classes/test_auth.py::TestAuth::test_login_invalid_password PASSED    [  4%]
 test_classes/test_users.py::TestUserCRUD::test_create_user_invalid_age_underage PASSED [  6%]
 ...
-========================================= 74 passed in 12.42s ==========================================
+========================================= 75 passed in 12.42s ==========================================
 ```
 
-### Failed Test Run (Güncel Durum):
+### Failed Test Run (Current Status):
 ```
 ========================================= test session starts ==========================================
-collected 74 items
+collected 75 items
 
 test_classes/test_auth.py::TestAuth::test_login_valid FAILED              [  1%]
 test_classes/test_users.py::TestUserCRUD::test_create_user_valid FAILED    [  2%]
 ...
-========================================= 17 failed, 58 passed, 1 warning in 23.17s ======================================
+========================================= 17 failed, 56 passed, 1 warning in 12.42s ======================================
 ```
-
-### Test Sonuçları Dağılımı:
-- **Authentication Tests**: 5 başarısız, 4 başarılı
-- **Other/Misc Tests**: 6 başarısız, 12 başarılı  
-- **Performance Tests**: 0 başarısız, 13 başarılı ✅
-- **Security Tests**: 2 başarısız, 15 başarılı
-- **User CRUD Tests**: 4 başarısız, 14 başarılı
-
-**Toplam**: 17 başarısız, 58 başarılı
 
 ## Test Structure
 
 ### Test Files:
-- `test_auth.py` - Authentication ve session management testleri (9 test)
-- `test_users.py` - User CRUD operations testleri (18 test)
-- `test_other.py` - Diğer endpoint'ler ve miscellaneous testler (18 test)
-- `test_security.py` - Security testleri (17 test)
-- `test_performance.py` - Performance testleri (13 test)
+- `test_auth.py` - Authentication and session management tests (8 tests)
+- `test_users.py` - User CRUD operations tests (15 tests)
+- `test_other.py` - Other endpoints and miscellaneous tests (21 tests)
+- `test_security.py` - Security tests (15 tests)
+- `test_performance.py` - Performance tests (15 tests)
 
 ### Test Classes:
-- `TestAuth` - Login, logout, session management (9 test)
-- `TestUserCRUD` - Create, read, update, delete operations (18 test)
-- `TestMisc` - Search, stats, health check, edge cases (18 test)
-- `TestSecurity` - Security vulnerability tests (17 test)
-- `TestPerformance` - Performance ve load tests (13 test)
+- `TestAuth` - Login, logout, session management (8 tests)
+- `TestUserCRUD` - Create, read, update, delete operations (15 tests)
+- `TestMisc` - Search, stats, health check, edge cases (21 tests)
+- `TestSecurity` - Security vulnerability tests (15 tests)
+- `TestPerformance` - Performance and load tests (15 tests)
 
 ### Test Categories:
-- **Positive Tests** - Geçerli input'larla beklenen sonuçlar
-- **Negative Tests** - Geçersiz input'larla hata durumları
-- **Edge Cases** - Boundary conditions ve limit değerler
+- **Positive Tests** - Expected results with valid inputs
+- **Negative Tests** - Error conditions with invalid inputs
+- **Edge Cases** - Boundary conditions and limit values
 - **Security Tests** - Authentication, authorization, input validation, XSS, SQL injection
 - **Performance Tests** - Rate limiting, concurrent requests, response time
-- **Bug Detection Tests** - API'deki bilinen bug'ları tespit eden testler
+- **Bug Detection Tests** - Tests that detect known bugs in the API
 
 ## Troubleshooting
 
@@ -185,7 +170,7 @@ test_classes/test_users.py::TestUserCRUD::test_create_user_valid FAILED    [  2%
 **Error:** `ConnectionError: [Errno 111] Connection refused`
 **Solution:** 
 ```bash
-# API server'ı başlatın
+# Start the API server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -193,7 +178,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 **Error:** `401 Unauthorized` for valid credentials
 **Solution:**
 ```bash
-# Test verilerini yükleyin
+# Load test data
 python seed_data.py
 ```
 
@@ -201,16 +186,16 @@ python seed_data.py
 **Error:** `[Errno 98] Address already in use`
 **Solution:**
 ```bash
-# Farklı port kullanın
+# Use a different port
 uvicorn main:app --reload --host 0.0.0.0 --port 8001
-# conftest.py'de BASE_URL'i güncelleyin
+# Update BASE_URL in conftest.py
 ```
 
 #### 4. Import Errors
 **Error:** `ModuleNotFoundError: No module named 'httpx'`
 **Solution:**
 ```bash
-# Test dependencies'leri yükleyin
+# Install test dependencies
 pip install -r requirements_test.txt
 ```
 
@@ -218,8 +203,8 @@ pip install -r requirements_test.txt
 **Error:** Tests failing due to shared state
 **Solution:**
 ```bash
-# Her test öncesi API'yi restart edin
-# Veya test data'yı her test öncesi temizleyin
+# Restart API before each test
+# Or clean test data before each test
 ```
 
 ## Test Configuration
@@ -246,90 +231,38 @@ python_functions = test_*
 addopts = -v --tb=short
 ```
 
-## Continuous Integration (CI/CD)
+## Continuous Integration
 
-### GitHub Actions Workflow
+### GitHub Actions
 
-Bu proje GitHub Actions ile otomatik test çalıştırma özelliğine sahiptir. Workflow dosyası `.github/workflows/ci.yml` konumunda bulunur.
+#### How to View Test Results:
 
-#### Workflow Özellikleri:
-- **Tetikleyici**: `push` ve `pull_request` eventleri
-- **Platform**: Ubuntu Latest
-- **Python Version**: 3.10
-- **Test Coverage**: 75 test case
-- **Raporlar**: HTML ve JUnit XML formatında
+1. **Go to GitHub Repository**
+   - Navigate to your repository on GitHub
+   - Click on the "Actions" tab
 
-#### Otomatik Çalıştırma:
-```bash
-# Her push veya pull request'te otomatik çalışır
-git push origin main
-# veya
-git push origin master
-```
+2. **View Workflow Runs**
+   - You'll see a list of workflow runs
+   - Click on the latest run to see details
 
-#### Manuel Çalıştırma:
-1. GitHub repository'ye gidin
-2. **Actions** sekmesine tıklayın
-3. **Test API - Study Case** workflow'unu seçin
-4. **Run workflow** butonuna tıklayın
+3. **Check Test Results**
+   - In the workflow run page, you'll see:
+     - ✅ **Green checkmark** = All tests passed
+     - ❌ **Red X** = Some tests failed
+     - ⚠️ **Yellow warning** = Tests passed with warnings
 
-#### Workflow Adımları:
-1. **Code Checkout** - Kodu çeker
-2. **Python Setup** - Python 3.10 kurulumu
-3. **Dependencies** - Gerekli paketleri yükler
-4. **API Server** - FastAPI sunucusunu başlatır
-5. **Seed Data** - Test verilerini oluşturur
-6. **Run Tests** - 75 testi çalıştırır
-7. **Generate Reports** - Detaylı raporlar oluşturur
-8. **Upload Artifacts** - Raporları yükler
+4. **Download Test Reports**
+   - Scroll down to "Artifacts" section
+   - Download `test-reports-{run-number}` artifact
+   - Extract and open `test-report.html` for detailed results
 
-#### Test Sonuçları:
-- **GitHub Actions** sekmesinde detaylı sonuçlar
-- **Artifacts** bölümünde HTML raporu indirilebilir
-- **Step Summary** bölümünde özet tablolar
-
-#### Workflow YAML Örneği:
-```yaml
-name: Test API - Study Case
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        pip install -r api_tests/requirements_test.txt
-    - name: Start API server
-      run: |
-        uvicorn main:app --host 0.0.0.0 --port 8000 &
-        sleep 10
-    - name: Seed test data
-      run: python seed_data.py
-    - name: Run tests
-      run: |
-        cd api_tests
-        python -m pytest test_classes/ -v --html=test-report.html --junitxml=test-results.xml
-```
-
-### CI/CD Avantajları:
-- ✅ **Otomatik Test** - Her kod değişikliğinde testler çalışır
-- ✅ **Detaylı Raporlar** - HTML ve XML formatında raporlar
-- ✅ **Test Kategorileri** - Her test sınıfı için ayrı istatistikler
-- ✅ **Hata Analizi** - Başarısız testlerin detaylı analizi
-- ✅ **Artifact Storage** - Raporlar 30 gün saklanır
-
+5. **View Test Summary**
+   - In the workflow run page, scroll down to see:
+     - Test execution summary
+     - Pass/fail statistics
+     - Failed test details
+     - Performance metrics
+ 
 ## Test Reports
 
 ### HTML Report:
@@ -355,17 +288,17 @@ python -m pytest test_classes/ --cov=../main --cov-report=html --cov-report=term
 
 ## Best Practices
 
-1. **Test Isolation** - Her test bağımsız olmalı
-2. **Clear Test Names** - Test isimleri ne test ettiğini açıklamalı
-3. **Assertion Messages** - Hata mesajları açıklayıcı olmalı
-4. **Test Data Management** - Test verileri yönetilebilir olmalı
-5. **Error Handling** - Test'ler beklenen hataları handle etmeli
-6. **Performance Considerations** - Test'ler hızlı çalışmalı
-7. **Documentation** - Test'ler dokümante edilmeli
+1. **Test Isolation** - Each test should be independent
+2. **Clear Test Names** - Test names should explain what they test
+3. **Assertion Messages** - Error messages should be descriptive
+4. **Test Data Management** - Test data should be manageable
+5. **Error Handling** - Tests should handle expected errors
+6. **Performance Considerations** - Tests should run fast
+7. **Documentation** - Tests should be documented
 
 ## Contact
 
-Test suite ile ilgili sorularınız için:
-- Test dosyalarını inceleyin
-- Bug report'u kontrol edin
-- Test report'u okuyun
+For questions about the test suite:
+- Review the test files
+- Check the bug report
+- Read the test report
