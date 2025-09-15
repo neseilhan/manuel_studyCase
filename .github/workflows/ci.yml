@@ -56,7 +56,8 @@ jobs:
           -v \
           --durations=10 \
           --maxfail=20 \
-          --continue-on-collection-errors
+          --continue-on-collection-errors \
+          --durations=0
         
         echo ""
         echo "✅ Test execution completed!"
@@ -311,7 +312,23 @@ jobs:
               EXECUTION_TIME="${SECONDS}s"
             fi
           else
-            EXECUTION_TIME="~3-4 minutes (estimated)"
+            # Try to get time from XML results
+            if [ -f "test-results.xml" ]; then
+              XML_TIME=$(grep -o 'time="[0-9.]*"' test-results.xml | head -1 | grep -o '[0-9.]*' || echo "")
+              if [ -n "$XML_TIME" ]; then
+                # Convert to integer seconds
+                INT_TIME=$(echo "$XML_TIME" | cut -d. -f1)
+                if [ $INT_TIME -gt 0 ]; then
+                  EXECUTION_TIME="${INT_TIME}s"
+                else
+                  EXECUTION_TIME="~12s (estimated)"
+                fi
+              else
+                EXECUTION_TIME="~12s (estimated)"
+              fi
+            else
+              EXECUTION_TIME="~12s (estimated)"
+            fi
           fi
           echo "| **Execution Time** | $EXECUTION_TIME |" >> $GITHUB_STEP_SUMMARY
           echo "| **Test Environment** | Ubuntu Latest |" >> $GITHUB_STEP_SUMMARY
