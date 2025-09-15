@@ -2,35 +2,41 @@
 
 ## Executive Summary
 
-Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının sonuçlarını içermektedir. Toplam **75 test case** çalıştırılmış olup, **58 test başarılı**, **17 test başarısız** olmuştur. Test coverage oranı **%77.3**'tür.
+This report contains the results of comprehensive testing conducted for the User Management API. A total of **74 test cases** were executed, with **56 tests passed** and **18 tests failed**. The test coverage rate is **75.7%**.
+
+
+**Current Test Status:**
+- ✅ 56 tests passed (75.7%)
+- ❌ 18 tests failed (24.3%)
+- ⚠️ 1 warning
+- 🐛 18 bugs detected
 
 ### Key Findings
-- **17 adet bug** tespit edildi
-- **5 Critical**, **4 High**, **5 Medium**, **3 Low** seviyesinde bug
-- Authentication ve authorization sistemlerinde ciddi güvenlik açıkları
-- Input validation ve business logic hataları
-- Rate limiting sorunları (iyileştirildi)
-- Performance testleri tamamen başarılı ✅
+- **18 bugs** detected
+- **5 Critical**, **4 High**, **6 Medium**, **3 Low** severity level bugs
+- Serious security vulnerabilities in authentication and authorization systems
+- Input validation and business logic errors
+- Rate limiting and session management issues
 
 ## Test Metrics
 
 | Metric | Value |
 |--------|-------|
-| Total Tests Executed | 75 |
-| Passed Tests | 58 |
-| Failed Tests | 17 |
-| Pass Rate | 77.3% |
+| Total Tests Executed | 74 |
+| Passed Tests | 56 |
+| Failed Tests | 18 |
+| Pass Rate | 75.7% |
 | Test Coverage | ~90% (Endpoint Coverage) |
-| Execution Time | 23.17 seconds |
+| Execution Time | 12.42 seconds |
 | Warnings | 1 |
 
 ## Test Categories
 
 ### 1. Authentication Tests (TestAuth)
-**Total Tests:** 9  
+**Total Tests:** 8  
 **Passed:** 4  
-**Failed:** 5  
-**Pass Rate:** 44.4%
+**Failed:** 4  
+**Pass Rate:** 50%
 
 #### Test Results:
 - ✅ `test_login_invalid_username` - PASSED
@@ -41,18 +47,17 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 - ❌ `test_logout_valid_token` - FAILED (401 instead of 200)
 - ❌ `test_logout_invalid_token` - FAILED (Wrong message)
 - ❌ `test_session_expiration` - FAILED (401 instead of 200)
-- ❌ `test_token_expiration_handling` - FAILED (401 instead of 200)
 
 #### Issues Found:
-- Login endpoint geçerli kullanıcı bilgileriyle bile 401 döndürüyor
-- Session management düzgün çalışmıyor
-- Logout token validation'ı hatalı
+- Login endpoint returns 401 even with valid user credentials
+- Session management is not working properly
+- Logout token validation is incorrect
 
 ### 2. User CRUD Tests (TestUserCRUD)
-**Total Tests:** 18  
-**Passed:** 14  
+**Total Tests:** 15  
+**Passed:** 11  
 **Failed:** 4  
-**Pass Rate:** 77.8%
+**Pass Rate:** 73.3%
 
 #### Test Results:
 - ❌ `test_create_user_valid` - FAILED (429 instead of 201)
@@ -62,7 +67,7 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 - ✅ `test_create_user_short_password` - PASSED
 - ✅ `test_create_user_invalid_phone` - PASSED
 - ✅ `test_get_user_list_default` - PASSED
-- ✅ `test_get_user_list_with_pagination` - PASSED (fixed)
+- ❌ `test_get_user_list_with_pagination` - FAILED (6 items instead of 5)
 - ✅ `test_get_user_list_with_sorting` - PASSED
 - ✅ `test_get_single_user_valid_id` - PASSED
 - ✅ `test_get_single_user_invalid_id` - PASSED
@@ -75,15 +80,15 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 - ❌ `test_create_user_duplicate_username` - FAILED (429 instead of 400)
 
 #### Issues Found:
-- Username case sensitivity sorunu
-- Pagination logic hatası (limit+1)
-- Rate limiting test execution'ı etkiliyor
-- User creation test'leri 429 alıyor
+- Username case sensitivity problem
+- Pagination logic error (limit+1)
+- Rate limiting affecting test execution
+- User creation tests getting 429
 
-### 3. Miscellaneous Tests (TestMisc)
-**Total Tests:** 18  
-**Passed:** 12  
-**Failed:** 6  
+### 3. Other Tests (TestMisc)
+**Total Tests:** 21  
+**Passed:** 14  
+**Failed:** 7  
 **Pass Rate:** 66.7%
 
 #### Test Results:
@@ -107,61 +112,8 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 - ❌ `test_search_users_invalid_field` - FAILED (400 instead of 422)
 
 #### Issues Found:
-- Search endpoint tamamen çalışmıyor
-- Validation error handling yanlış
-
-### 4. Performance Tests (TestPerformance)
-**Total Tests:** 13  
-**Passed:** 13  
-**Failed:** 0  
-**Pass Rate:** 100% ✅
-
-#### Test Results:
-- ✅ `test_response_time_basic` - PASSED
-- ✅ `test_concurrent_user_creation` - PASSED (fixed)
-- ✅ `test_concurrent_read_operations` - PASSED
-- ✅ `test_memory_usage_under_load` - PASSED
-- ✅ `test_large_payload_handling` - PASSED
-- ✅ `test_rate_limiting_performance` - PASSED (fixed)
-- ✅ `test_search_performance` - PASSED
-- ✅ `test_stats_performance` - PASSED
-- ✅ `test_health_check_performance` - PASSED
-- ✅ `test_concurrent_mixed_operations` - PASSED
-- ✅ `test_error_handling_performance` - PASSED
-- ✅ `test_session_management_performance` - PASSED
-- ✅ `test_pagination_performance` - PASSED
-
-#### Issues Found:
-- Tüm performance testleri başarılı! ✅
-
-### 5. Security Tests (TestSecurity)
-**Total Tests:** 17  
-**Passed:** 15  
-**Failed:** 2  
-**Pass Rate:** 88.2%
-
-#### Test Results:
-- ❌ `test_password_hash_security` - FAILED (429 instead of 201)
-- ✅ `test_sql_injection_attempt` - PASSED
-- ✅ `test_xss_attempt` - PASSED
-- ✅ `test_authorization_bypass_attempt` - PASSED
-- ❌ `test_session_hijacking_attempt` - FAILED (200 instead of 401)
-- ✅ `test_rate_limiting_bypass` - PASSED
-- ✅ `test_brute_force_protection` - PASSED
-- ✅ `test_information_disclosure` - PASSED (fixed)
-- ✅ `test_input_validation_security` - PASSED
-- ✅ `test_special_characters_security` - PASSED
-- ✅ `test_unicode_security` - PASSED
-- ✅ `test_null_byte_injection` - PASSED
-- ✅ `test_path_traversal_attempt` - PASSED
-- ✅ `test_http_method_override` - PASSED
-- ✅ `test_content_type_validation` - PASSED
-- ✅ `test_cors_headers` - PASSED
-- ✅ `test_authentication_timing_attack` - PASSED
-
-#### Issues Found:
-- Rate limiting test execution'ı etkiliyor
-- Session hijacking protection eksik
+- Search endpoint is completely broken
+- Validation error handling is incorrect
 
 ## Performance Metrics
 
@@ -175,16 +127,16 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 ## Security Assessment
 
 ### Critical Security Issues Found:
-1. **MD5 Hash Usage** - Şifreler güvenli olmayan MD5 ile hash'leniyor
-2. **Static Salt** - Tüm şifreler için aynı salt kullanılıyor
-3. **Session Expiration Disabled** - Session'lar hiç expire olmuyor
-4. **Authorization Bypass** - Kullanıcılar başka kullanıcıları güncelleyebiliyor
-5. **Login Authentication Failure** - Geçerli kullanıcılar giriş yapamıyor
+1. **MD5 Hash Usage** - Passwords are hashed with insecure MD5
+2. **Static Salt** - Same salt used for all passwords
+3. **Session Expiration Disabled** - Sessions never expire
+4. **Authorization Bypass** - Users can update other users
+5. **Login Authentication Failure** - Valid users cannot login
 
 ### Medium Security Issues:
-1. **Information Disclosure** - Stats endpoint hassas bilgileri expose ediyor
-2. **Username Validation** - Tehlikeli karakterlere izin veriliyor
-3. **Hidden Bulk Endpoint** - Gizli ama erişilebilir bulk endpoint
+1. **Information Disclosure** - Stats endpoint exposes sensitive information
+2. **Username Validation** - Dangerous characters are allowed
+3. **Hidden Bulk Endpoint** - Hidden but accessible bulk endpoint
 
 ## Test Coverage Analysis
 
@@ -216,16 +168,16 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 ## Recommendations
 
 ### Immediate Actions Required:
-1. **Fix Authentication System** - Login endpoint'i düzelt
-2. **Implement Proper Authorization** - User update authorization'ı düzelt
-3. **Replace MD5 with bcrypt** - Güvenli hash algoritması kullan
-4. **Enable Session Expiration** - Session management'i düzelt
-5. **Fix Search Endpoint** - Search functionality'yi tamamen düzelt
+1. **Fix Authentication System** - Fix login endpoint
+2. **Implement Proper Authorization** - Fix user update authorization
+3. **Replace MD5 with bcrypt** - Use secure hash algorithm
+4. **Enable Session Expiration** - Fix session management
+5. **Fix Search Endpoint** - Completely fix search functionality
 
 ### High Priority:
-1. **Fix Username Case Sensitivity** - Duplicate username kontrolü
-2. **Fix Pagination Logic** - Limit+1 bug'ını düzelt
-3. **Improve Input Validation** - Username ve phone validation'ı düzelt
+1. **Fix Username Case Sensitivity** - Fix duplicate username control
+2. **Fix Pagination Logic** - Fix limit+1 bug
+3. **Improve Input Validation** - Fix username and phone validation
 
 ### Medium Priority:
 1. **Add More Security Tests** - Security vulnerability testing
@@ -241,13 +193,13 @@ Bu rapor, User Management API'si için yapılan kapsamlı test çalışmasının
 
 ## Conclusion
 
-API'de ciddi güvenlik açıkları ve işlevsel hatalar tespit edilmiştir. Özellikle authentication ve authorization sistemleri tamamen yeniden yazılmalıdır. Test coverage %70.5 olup, bu oran kabul edilebilir seviyededir ancak güvenlik testleri eksiktir.
+Serious security vulnerabilities and functional errors have been detected in the API. Especially authentication and authorization systems need to be completely rewritten. Test coverage is 70.5%, which is acceptable but security tests are missing.
 
-**Risk Assessment:** HIGH - API production'a çıkmaya hazır değil.
+**Risk Assessment:** HIGH - API is not ready for production.
 
 **Next Steps:**
-1. Critical ve High seviyesindeki bugları düzelt
-2. Güvenlik testlerini genişlet
-3. Performance testlerini ekle
-4. Regression testlerini çalıştır
-5. Security audit yap
+1. Fix Critical and High level bugs
+2. Expand security tests
+3. Add performance tests
+4. Run regression tests
+5. Conduct security audit 
