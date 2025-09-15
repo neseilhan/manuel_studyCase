@@ -2,23 +2,23 @@
 
 ## Executive Summary
 
-Bu rapor, User Management API'sinde tespit edilen bugları detaylandırmaktadır. Toplam **18 adet bug** tespit edilmiş olup, bunların **5'i Critical**, **4'ü High**, **6'sı Medium** ve **3'ü Low** seviyesindedir.
+This report details the bugs detected in the User Management API. A total of **18 bugs** have been identified, with **5 Critical**, **4 High**, **6 Medium**, and **3 Low** severity levels.
 
-**Test Sonuçları:** 74 test çalıştırıldı, 56 başarılı, 18 başarısız, 1 uyarı
+**Test Results:** 74 tests executed, 56 passed, 18 failed, 1 warning
 
-## Bug Listesi
+## Bug List
 
 ### BUG-001: Login Endpoint Authentication Failure
 **Severity:** Critical  
 **Category:** Authentication/Security
 
 **Description:**
-Login endpoint'i geçerli kullanıcı bilgileriyle bile 401 Unauthorized döndürüyor. Test verilerinde bulunan `john_doe` kullanıcısı ile giriş yapılamıyor.
+The login endpoint returns 401 Unauthorized even with valid user credentials. Login cannot be performed with the `john_doe` user found in test data.
 
 **Steps to Reproduce:**
-1. API'yi başlatın
-2. Test verilerini yükleyin (`python seed_data.py`)
-3. POST `/login` endpoint'ine şu payload ile istek gönderin:
+1. Start the API
+2. Load test data (`python seed_data.py`)
+3. Send a request to POST `/login` endpoint with this payload:
 ```json
 {
     "username": "john_doe",
@@ -28,7 +28,7 @@ Login endpoint'i geçerli kullanıcı bilgileriyle bile 401 Unauthorized döndü
 
 **Expected Result:**
 - Status Code: 200
-- Response: Token ve kullanıcı bilgileri
+- Response: Token and user information
 
 **Actual Result:**
 - Status Code: 401
@@ -56,20 +56,20 @@ POST /login
 **Category:** Logic/Validation
 
 **Description:**
-Aynı username'in farklı case'lerde (büyük/küçük harf) birden fazla kez oluşturulabilmesi. Username'ler case-insensitive olarak saklanıyor ama duplicate kontrolü case-sensitive yapılıyor.
+The same username can be created multiple times with different cases (uppercase/lowercase). Usernames are stored case-insensitive but duplicate checking is done case-sensitive.
 
 **Steps to Reproduce:**
-1. `CaseSensitiveUser` username'i ile kullanıcı oluşturun
-2. `casesensitiveuser` username'i ile aynı kullanıcıyı tekrar oluşturmaya çalışın
+1. Create a user with username `CaseSensitiveUser`
+2. Try to create the same user again with username `casesensitiveuser`
 
 **Expected Result:**
-- İkinci istek 400 Bad Request döndürmeli
-- "Username already exists" hatası
+- Second request should return 400 Bad Request
+- "Username already exists" error
 
 **Actual Result:**
-- İkinci istek 201 Created döndürüyor
-- Kullanıcı başarıyla oluşturuluyor
-
+- Second request returns 201 Created
+- User is successfully created
+  
 **Evidence:**
 ```json
 // First request - SUCCESS
@@ -100,16 +100,16 @@ POST /users
 **Category:** Logic
 
 **Description:**
-Pagination'da limit+1 kadar kayıt döndürülüyor. Limit 5 olarak ayarlandığında 6 kayıt döndürülüyor.
+Pagination returns limit+1 records. When limit is set to 5, 6 records are returned.
 
 **Steps to Reproduce:**
-1. GET `/users?limit=5&offset=0` endpoint'ine istek gönderin
+1. Send a request to GET `/users?limit=5&offset=0` endpoint
 
 **Expected Result:**
-- Maksimum 5 kayıt döndürülmeli
+- Maximum 5 records should be returned
 
 **Actual Result:**
-- 6 kayıt döndürülüyor
+- 6 records are returned
 
 **Evidence:**
 ```python
@@ -124,18 +124,18 @@ paginated_users = all_users[offset : offset + limit + 1]  # BUG: +1 extra
 **Category:** Validation
 
 **Description:**
-Search endpoint'i geçerli query parametreleriyle bile 400 Bad Request döndürüyor. Tüm search testleri başarısız oluyor.
+The search endpoint returns 400 Bad Request even with valid query parameters. All search tests are failing.
 
 **Steps to Reproduce:**
-1. GET `/users/search?q=john` endpoint'ine istek gönderin
+1. Send a request to GET `/users/search?q=john` endpoint
 
 **Expected Result:**
 - Status Code: 200
-- Kullanıcı listesi
+- User list
 
 **Actual Result:**
 - Status Code: 400
-- Bad Request hatası
+- Bad Request error
 
 **Evidence:**
 ```json
@@ -155,19 +155,19 @@ GET /users/search?q=john
 **Category:** Security/Logic
 
 **Description:**
-Logout endpoint'i geçersiz token ile çağrıldığında "Logged out successfully" mesajı döndürüyor. Geçersiz token'lar için "No active session" döndürmeli.
+The logout endpoint returns "Logged out successfully" message when called with invalid token. It should return "No active session" for invalid tokens.
 
 **Steps to Reproduce:**
-1. POST `/logout` endpoint'ine geçersiz token ile istek gönderin:
+1. Send a request to POST `/logout` endpoint with invalid token:
 ```
 Authorization: Bearer invalid_token
 ```
 
 **Expected Result:**
-- "No active session" mesajı
+- "No active session" message
 
 **Actual Result:**
-- "Logged out successfully" mesajı
+- "Logged out successfully" message
 
 **Evidence:**
 ```json
@@ -188,16 +188,16 @@ Authorization: Bearer invalid_token
 **Category:** Security
 
 **Description:**
-Şifreler MD5 ile hash'leniyor. MD5 güvenli değil ve rainbow table saldırılarına açık.
+Passwords are hashed with MD5. MD5 is not secure and vulnerable to rainbow table attacks.
 
 **Steps to Reproduce:**
-1. API kodunu inceleyin (main.py line 68-69)
+1. Review API code (main.py line 68-69)
 
 **Expected Result:**
-- bcrypt, scrypt veya Argon2 gibi güvenli hash algoritması kullanılmalı
+- A secure hash algorithm like bcrypt, scrypt, or Argon2 should be used
 
 **Actual Result:**
-- MD5 kullanılıyor
+- MD5 is being used
 
 **Evidence:**
 ```python
@@ -214,16 +214,16 @@ def hash_password(password: str) -> str:
 **Category:** Security
 
 **Description:**
-Tüm şifreler için aynı static salt kullanılıyor. Bu güvenlik açığı oluşturuyor.
+The same static salt is used for all passwords. This creates a security vulnerability.
 
 **Steps to Reproduce:**
-1. API kodunu inceleyin (main.py line 68)
+1. Review API code (main.py line 68)
 
 **Expected Result:**
-- Her şifre için unique salt kullanılmalı
+- Unique salt should be used for each password
 
 **Actual Result:**
-- Tüm şifreler için "static_salt_2024" kullanılıyor
+- "static_salt_2024" is used for all passwords
 
 **Evidence:**
 ```python
@@ -238,16 +238,16 @@ salt = "static_salt_2024"  # BUG: Static salt for all passwords
 **Category:** Security
 
 **Description:**
-Session expiration kontrolü yorum satırına alınmış. Session'lar hiç expire olmuyor.
+Session expiration control is commented out. Sessions never expire.
 
 **Steps to Reproduce:**
-1. API kodunu inceleyin (main.py lines 130-131)
+1. Review API code (main.py lines 130-131)
 
 **Expected Result:**
-- Session'lar belirli süre sonra expire olmalı
+- Sessions should expire after a certain time
 
 **Actual Result:**
-- Session'lar hiç expire olmuyor
+- Sessions never expire
 
 **Evidence:**
 ```python
@@ -263,16 +263,16 @@ Session expiration kontrolü yorum satırına alınmış. Session'lar hiç expir
 **Category:** Validation
 
 **Description:**
-Telefon numarası validation regex'i yanlış. Geçerli telefon numaralarını reddediyor.
+Phone number validation regex is incorrect. It rejects valid phone numbers.
 
 **Steps to Reproduce:**
-1. API kodunu inceleyin (main.py line 40)
+1. Review API code (main.py line 40)
 
 **Expected Result:**
-- Geçerli telefon numaraları kabul edilmeli
+- Valid phone numbers should be accepted
 
 **Actual Result:**
-- Regex yanlış, geçerli numaralar reddediliyor
+- Regex is incorrect, valid numbers are rejected
 
 **Evidence:**
 ```python
@@ -287,16 +287,16 @@ if v and not re.match(r"^\+?1?\d{9,15}$", v):  # BUG: Only US format
 **Category:** Security/Validation
 
 **Description:**
-Username validation'da tehlikeli karakterlere izin veriliyor (', ", ;).
+Username validation allows dangerous characters (', ", ;).
 
 **Steps to Reproduce:**
-1. API kodunu inceleyin (main.py line 34)
+1. Review API code (main.py line 34)
 
 **Expected Result:**
-- Sadece güvenli karakterlere izin verilmeli
+- Only safe characters should be allowed
 
 **Actual Result:**
-- Tehlikeli karakterlere izin veriliyor
+- Dangerous characters are allowed
 
 **Evidence:**
 ```python
@@ -311,16 +311,16 @@ if not re.match(r'^[a-zA-Z0-9_\-\'";]+$', v):  # BUG: Allows ', ", ;
 **Category:** Logic
 
 **Description:**
-User ID bazen string bazen integer olarak işleniyor. get_user endpoint'inde string kabul ediliyor ama diğer endpoint'lerde integer bekleniyor.
+User ID is sometimes processed as string, sometimes as integer. get_user endpoint accepts string but other endpoints expect integer.
 
 **Steps to Reproduce:**
-1. API kodunu inceleyin (main.py lines 179-186 vs 193-196)
+1. Review API code (main.py lines 179-186 vs 193-196)
 
 **Expected Result:**
-- Tüm endpoint'lerde tutarlı type kullanılmalı
+- Consistent type should be used across all endpoints
 
 **Actual Result:**
-- Type inconsistency var
+- Type inconsistency exists
 
 **Evidence:**
 ```python
@@ -338,16 +338,16 @@ def update_user(user_id: int, ...):  # Integer parameter
 **Category:** Logic
 
 **Description:**
-Rate limiting'de time window hesaplaması yanlış. 60 saniye sonra counter reset olmuyor.
+Rate limiting time window calculation is incorrect. Counter does not reset after 60 seconds.
 
 **Steps to Reproduce:**
-1. API kodunu inceleyin (main.py lines 72-88)
+1. Review API code (main.py lines 72-88)
 
 **Expected Result:**
-- 60 saniye sonra counter reset olmalı
+- Counter should reset after 60 seconds
 
 **Actual Result:**
-- Counter reset logic'i hatalı
+- Counter reset logic is incorrect
 
 **Evidence:**
 ```python
@@ -367,16 +367,16 @@ else:
 **Category:** Security
 
 **Description:**
-Update user endpoint'inde authorization kontrolü eksik. Kullanıcılar başka kullanıcıların bilgilerini güncelleyebiliyor.
+Update user endpoint lacks authorization control. Users can update other users' information.
 
 **Steps to Reproduce:**
-1. API kodunu inceleyin (main.py lines 193-217)
+1. Review API code (main.py lines 193-217)
 
 **Expected Result:**
-- Kullanıcılar sadece kendi bilgilerini güncelleyebilmeli
+- Users should only be able to update their own information
 
 **Actual Result:**
-- Authorization kontrolü yok
+- No authorization control
 
 **Evidence:**
 ```python
@@ -394,16 +394,16 @@ if not username:
 **Category:** Security
 
 **Description:**
-Stats endpoint'i include_details=true ile çağrıldığında session token'ları ve email'leri expose ediyor.
+Stats endpoint exposes session tokens and emails when called with include_details=true.
 
 **Steps to Reproduce:**
-1. GET `/stats?include_details=true` endpoint'ine istek gönderin
+1. Send a request to GET `/stats?include_details=true` endpoint
 
 **Expected Result:**
-- Hassas bilgiler expose edilmemeli
+- Sensitive information should not be exposed
 
 **Actual Result:**
-- Session token'ları ve email'ler döndürülüyor
+- Session tokens and emails are returned
 
 **Evidence:**
 ```python
@@ -420,16 +420,16 @@ if include_details:
 **Category:** Security
 
 **Description:**
-Bulk create endpoint'i schema'dan gizlenmiş ama hala erişilebilir. Bu endpoint rate limiting bypass'ına izin verebilir.
+Bulk create endpoint is hidden from schema but still accessible. This endpoint could allow rate limiting bypass.
 
 **Steps to Reproduce:**
-1. API kodunu inceleyin (main.py line 316)
+1. Review API code (main.py line 316)
 
 **Expected Result:**
-- Bulk endpoint ya tamamen kaldırılmalı ya da güvenli hale getirilmeli
+- Bulk endpoint should either be completely removed or made secure
 
 **Actual Result:**
-- Endpoint gizli ama erişilebilir
+- Endpoint is hidden but accessible
 
 **Evidence:**
 ```python
@@ -444,16 +444,16 @@ Bulk create endpoint'i schema'dan gizlenmiş ama hala erişilebilir. Bu endpoint
 **Category:** Logic/Performance
 
 **Description:**
-Rate limiting test'leri başarısız oluyor. Rate limiting mekanizması düzgün çalışmıyor.
+Rate limiting tests are failing. Rate limiting mechanism is not working properly.
 
 **Steps to Reproduce:**
-1. `test_rate_limiting_performance` test'ini çalıştırın
+1. Run `test_rate_limiting_performance` test
 
 **Expected Result:**
-- Rate limiting çalışmalı ve bazı istekler 429 döndürmeli
+- Rate limiting should work and some requests should return 429
 
 **Actual Result:**
-- Rate limiting çalışmıyor, tüm istekler geçiyor
+- Rate limiting is not working, all requests pass through
 
 **Evidence:**
 ```
@@ -468,16 +468,16 @@ assert rate_limited_count > 0
 **Category:** Security
 
 **Description:**
-Predictable session token'lar kabul ediliyor. Session hijacking saldırılarına açık.
+Predictable session tokens are accepted. Vulnerable to session hijacking attacks.
 
 **Steps to Reproduce:**
-1. `test_session_hijacking_attempt` test'ini çalıştırın
+1. Run `test_session_hijacking_attempt` test
 
 **Expected Result:**
-- Predictable token'lar reddedilmeli (401)
+- Predictable tokens should be rejected (401)
 
 **Actual Result:**
-- Predictable token'lar kabul ediliyor (200)
+- Predictable tokens are accepted (200)
 
 **Evidence:**
 ```
@@ -493,16 +493,16 @@ E   assert 200 == 401
 **Category:** Performance
 
 **Description:**
-Rate limiting test execution'ı etkiliyor. Test'ler 429 Too Many Requests alıyor.
+Rate limiting is affecting test execution. Tests are getting 429 Too Many Requests.
 
 **Steps to Reproduce:**
-1. Test suite'ini çalıştırın
+1. Run the test suite
 
 **Expected Result:**
-- Test'ler rate limiting'den etkilenmemeli
+- Tests should not be affected by rate limiting
 
 **Actual Result:**
-- Birçok test 429 alıyor
+- Many tests are getting 429
 
 **Evidence:**
 ```
@@ -524,23 +524,23 @@ E   assert 429 == 201
 ## Recommendations
 
 1. **Immediate Actions (Critical Bugs):**
-   - MD5 hash'i bcrypt ile değiştir
-   - Static salt'ı unique salt ile değiştir
-   - Session expiration'ı aktif et
-   - Authorization bypass'ı düzelt
-   - Login authentication'ı düzelt
+   - Replace MD5 hash with bcrypt
+   - Replace static salt with unique salt
+   - Enable session expiration
+   - Fix authorization bypass
+   - Fix login authentication
 
 2. **High Priority (High Bugs):**
-   - Username case sensitivity'yi düzelt
-   - Pagination logic'ini düzelt
-   - Search endpoint'ini düzelt
+   - Fix username case sensitivity
+   - Fix pagination logic
+   - Fix search endpoint
 
 3. **Medium Priority:**
-   - Phone validation regex'ini düzelt
-   - Username validation'ı güvenli hale getir
-   - User ID type consistency'yi sağla
-   - Bulk endpoint'i güvenli hale getir
+   - Fix phone validation regex
+   - Make username validation secure
+   - Ensure user ID type consistency
+   - Make bulk endpoint secure
 
 4. **Low Priority:**
-   - Rate limiting logic'ini düzelt
-   - Information disclosure'ı engelle
+   - Fix rate limiting logic
+   - Prevent information disclosure
