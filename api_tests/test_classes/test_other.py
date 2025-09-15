@@ -87,9 +87,8 @@ class TestMisc:
 
     def test_rate_limiting(self, client):
         """Test rate limiting functionality"""
-        import time
-        # Make multiple requests with small delays to test rate limiting
-        for i in range(3):  # Reduced from 5 to 3
+        # Make multiple requests quickly to test rate limiting
+        for i in range(5):
             response = client.post("/users", json={
                 "username": f"rate_test_user_{i}",
                 "email": f"rate_test_{i}@example.com",
@@ -97,8 +96,7 @@ class TestMisc:
                 "age": 25
             })
             # Should succeed for first few requests
-            assert response.status_code in [201, 429, 400]  # Added 400 as acceptable
-            time.sleep(0.2)  # Small delay between requests
+            assert response.status_code in [201, 429]
 
     def test_concurrent_requests(self, client):
         """Test handling of concurrent requests"""

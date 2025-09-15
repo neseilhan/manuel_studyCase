@@ -26,14 +26,14 @@ class TestPerformance:
             response = client.post("/users", json=payload)
             return response.status_code
         
-        # Create 5 users concurrently (reduced from 10)
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [executor.submit(create_user, i) for i in range(5)]
+        # Create 10 users concurrently
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(create_user, i) for i in range(10)]
             results = [future.result() for future in futures]
         
         # Most should succeed (some might fail due to rate limiting)
         success_count = sum(1 for status in results if status == 201)
-        assert success_count >= 2  # At least 2 should succeed (reduced from 5)
+        assert success_count >= 5  # At least half should succeed
 
     def test_concurrent_read_operations(self, client):
         def read_users():
@@ -91,7 +91,7 @@ class TestPerformance:
         success_count = 0
         rate_limited_count = 0
         
-        for i in range(10):  # Reduced from 20 to 10
+        for i in range(20):
             payload = {
                 "username": f"rate_test_{i}",
                 "email": f"rate_{i}@example.com",
@@ -105,13 +105,14 @@ class TestPerformance:
             elif response.status_code == 429:
                 rate_limited_count += 1
             
-            time.sleep(0.2)  # Increased delay between requests
+            time.sleep(0.1)  # Small delay between requests
         
         end_time = time.time()
         total_time = end_time - start_time
         
         # Should have some successes and some rate limits
-        assert success_count > 0 or rate_limited_count > 0  # At least one should happen
+        assert success_count > 0
+        assert rate_limited_count > 0
         assert total_time < 5.0  # Should complete within reasonable time
 
     def test_search_performance(self, client):
