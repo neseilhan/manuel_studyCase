@@ -2,7 +2,7 @@
 
 ## Overview
 
-This documentation explains how to run the test suite written for the User Management API. The test suite is written using the pytest framework and contains 74 test cases.
+This documentation explains how to run the test suite written for the User Management API. The test suite is written using the pytest framework and contains 76 test cases.
 
 ## Prerequisites
 
@@ -74,6 +74,12 @@ python -m pytest test_classes/test_users.py -v
 
 # Miscellaneous tests
 python -m pytest test_classes/test_other.py -v
+
+# Security tests
+python -m pytest test_classes/test_security.py -v
+
+# Performance tests
+python -m pytest test_classes/test_performance.py -v
 ```
 
 ### 3. Run Specific Test Classes
@@ -86,6 +92,12 @@ python -m pytest test_classes/test_users.py::TestUserCRUD -v
 
 # TestMisc class only
 python -m pytest test_classes/test_other.py::TestMisc -v
+
+# TestSecurity class only
+python -m pytest test_classes/test_security.py::TestSecurity -v
+
+# TestPerformance class only
+python -m pytest test_classes/test_performance.py::TestPerformance -v
 ```
 
 ### 4. Run Specific Test Methods
@@ -114,28 +126,43 @@ python -m pytest test_classes/ -n auto -v
 
 ## Test Output Examples
 
-### Successful Test Run:
+### Successful Test Run (Expected):
 ```
 ========================================= test session starts ==========================================
 platform win32 -- Python 3.13.7, pytest-8.4.2
-collected 74 items
+collected 76 items
 
 test_classes/test_auth.py::TestAuth::test_login_invalid_username PASSED    [  2%]
 test_classes/test_auth.py::TestAuth::test_login_invalid_password PASSED    [  4%]
 test_classes/test_users.py::TestUserCRUD::test_create_user_invalid_age_underage PASSED [  6%]
 ...
-========================================= 75 passed in 12.42s ==========================================
+========================================= 76 passed in 13.56s ==========================================
 ```
 
 ### Failed Test Run (Current Status):
 ```
 ========================================= test session starts ==========================================
-collected 75 items
+collected 76 items
 
-test_classes/test_auth.py::TestAuth::test_login_valid FAILED              [  1%]
-test_classes/test_users.py::TestUserCRUD::test_create_user_valid FAILED    [  2%]
+test_classes/test_auth.py::TestAuth::test_logout_invalid_token FAILED      [  1%]
+test_classes/test_auth.py::TestAuth::test_token_expiration_handling FAILED  [  2%]
+test_classes/test_other.py::TestMisc::test_health_check_memory_counts FAILED [  3%]
+test_classes/test_other.py::TestMisc::test_search_users_by_username FAILED  [  4%]
+test_classes/test_other.py::TestMisc::test_search_users_by_email FAILED     [  5%]
+test_classes/test_other.py::TestMisc::test_search_users_field_username FAILED [  6%]
+test_classes/test_other.py::TestMisc::test_search_users_field_email FAILED   [  7%]
+test_classes/test_other.py::TestMisc::test_search_users_exact_match FAILED   [  8%]
+test_classes/test_other.py::TestMisc::test_search_users_empty_query FAILED   [  9%]
+test_classes/test_other.py::TestMisc::test_search_users_invalid_field FAILED [ 10%]
+test_classes/test_performance.py::TestPerformance::test_rate_limiting_performance FAILED [ 11%]
+test_classes/test_security.py::TestSecurity::test_password_hash_security FAILED [ 12%]
+test_classes/test_security.py::TestSecurity::test_session_hijacking_attempt FAILED [ 13%]
+test_classes/test_security.py::TestSecurity::test_information_disclosure FAILED [ 14%]
+test_classes/test_users.py::TestUserCRUD::test_create_user_valid FAILED      [ 15%]
+test_classes/test_users.py::TestUserCRUD::test_get_user_list_with_pagination FAILED [ 16%]
+test_classes/test_users.py::TestUserCRUD::test_username_case_sensitivity FAILED [ 17%]
 ...
-========================================= 17 failed, 56 passed, 1 warning in 12.42s ======================================
+========================================= 17 failed, 59 passed, 1 warning in 13.56s ======================================
 ```
 
 ## Test Structure
@@ -144,15 +171,15 @@ test_classes/test_users.py::TestUserCRUD::test_create_user_valid FAILED    [  2%
 - `test_auth.py` - Authentication and session management tests (8 tests)
 - `test_users.py` - User CRUD operations tests (15 tests)
 - `test_other.py` - Other endpoints and miscellaneous tests (21 tests)
-- `test_security.py` - Security tests (15 tests)
-- `test_performance.py` - Performance tests (15 tests)
+- `test_security.py` - Security tests (3 tests)
+- `test_performance.py` - Performance tests (1 test)
 
 ### Test Classes:
 - `TestAuth` - Login, logout, session management (8 tests)
 - `TestUserCRUD` - Create, read, update, delete operations (15 tests)
 - `TestMisc` - Search, stats, health check, edge cases (21 tests)
-- `TestSecurity` - Security vulnerability tests (15 tests)
-- `TestPerformance` - Performance and load tests (15 tests)
+- `TestSecurity` - Security vulnerability tests (3 tests)
+- `TestPerformance` - Performance and load tests (1 test)
 
 ### Test Categories:
 - **Positive Tests** - Expected results with valid inputs
