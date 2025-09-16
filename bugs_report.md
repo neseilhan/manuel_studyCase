@@ -2,9 +2,9 @@
 
 ## Executive Summary
 
-This report details the bugs detected in the User Management API. A total of **17 bugs** have been identified through automated testing, with **4 Critical**, **5 High**, **5 Medium**, and **3 Low** severity levels.
+This report details the bugs detected in the User Management API. A total of **17 bugs** have been identified through automated testing, with **4 Critical**, **4 High**, **5 Medium**, and **4 Low** severity levels.
 
-**Test Results:** 75 tests executed, 58 passed, 17 failed, 1 warning
+**Test Results:** 76 tests executed, 59 passed, 17 failed, 1 warning
 
 ## Bug List
 
@@ -75,7 +75,7 @@ Headers: {
     "username": "john_doe",
     "email": "john@example.com",
     "age": 30,
-    "created_at": "2025-09-16T00:14:35.818589"
+    "created_at": "2025-09-16T01:01:00.326631"
 }
 ```
 
@@ -210,7 +210,7 @@ POST /users
     "username": "rate_test_0",
     "email": "rate_0@example.com",
     "age": 25,
-    "created_at": "2025-09-16T00:14:48.123456"
+    "created_at": "2025-09-16T01:01:12.123456"
 }
 ```
 
@@ -276,7 +276,7 @@ Headers: {
     "username": "john_doe",
     "email": "john@example.com",
     "age": 30,
-    "created_at": "2025-09-16T00:14:35.818589"
+    "created_at": "2025-09-16T01:01:00.326631"
 }
 ```
 
@@ -308,15 +308,15 @@ GET /stats?include_details=true
 // Response
 {
     "active_sessions": 8,
-    "active_users": 100,
+    "active_users": 110,
     "api_version": "1.0.0",
     "inactive_users": 0,
     "session_tokens": [
-        "a8ce1711ec4631354f284c255e9bbf75",
-        "b94e6702c40fce52d2ec761c475755ab",
-        "cbdd12b59aba446865a2f07bf4461758",
-        "58d7104af7e1823e044b5d93132ccad6",
-        "84ee73c481b1aaa8feda87f6393f0ece"
+        "32f29dc3e7328e21ac8e78268054ca47",
+        "5ec3a1c7457a342bba0eeca8459ec18c",
+        "75b9dc226b6cb36afab68ba5b477b320",
+        "36a6ec8da135b2df7b6b8d348e392bbc",
+        "d74d80dcdde9aed056a87f5ee1b964d9"
     ]
 }
 ```
@@ -362,45 +362,7 @@ POST /users
 
 ---
 
-### BUG-011: Duplicate Username Rate Limiting
-**Severity:** Medium  
-**Category:** Performance
-
-**Description:**
-Rate limiting is preventing proper validation of duplicate usernames, causing 429 instead of 400.
-
-**Steps to Reproduce:**
-1. Try to create a user with existing username
-2. Check the response status
-
-**Expected Result:**
-- Status Code: 400 Bad Request
-- "Username already exists" error
-
-**Actual Result:**
-- Status Code: 429 Too Many Requests
-- Rate limiting prevents proper validation
-
-**Evidence:**
-```json
-// Request
-POST /users
-{
-    "username": "john_doe",  // Already exists
-    "email": "duplicate@example.com",
-    "password": "Password123",
-    "age": 25
-}
-
-// Response
-{
-    "detail": "Too Many Requests"
-}
-```
-
----
-
-### BUG-012: Pagination Logic Error
+### BUG-011: Pagination Logic Error
 **Severity:** High  
 **Category:** Logic
 
@@ -424,24 +386,24 @@ GET /users?limit=5&offset=0
 
 // Response
 [
-    {"id": 1, "username": "john_doe", "email": "john@example.com", "age": 30},
-    {"id": 2, "username": "jane_doe", "email": "jane@example.com", "age": 25},
-    {"id": 3, "username": "bob_smith", "email": "bob@example.com", "age": 35},
-    {"id": 4, "username": "alice_johnson", "email": "alice@example.com", "age": 28},
-    {"id": 5, "username": "charlie_brown", "email": "charlie@example.com", "age": 22},
-    {"id": 6, "username": "test.user", "email": "test.user@example.com", "age": 40}
+    {"id": 1, "username": "john_doe", "email": "john@example.com", "age": 30, "created_at": "2025-09-16T01:01:00.326631"},
+    {"id": 2, "username": "jane_doe", "email": "jane@example.com", "age": 25, "created_at": "2025-09-16T01:01:02.378829"},
+    {"id": 3, "username": "bob_smith", "email": "bob@example.com", "age": 35, "created_at": "2025-09-16T01:01:04.444507"},
+    {"id": 4, "username": "alice_johnson", "email": "alice@example.com", "age": 28, "created_at": "2025-09-16T01:01:06.496605"},
+    {"id": 5, "username": "charlie_brown", "email": "charlie@example.com", "age": 22, "created_at": "2025-09-16T01:01:08.548605"},
+    {"id": 6, "username": "test.user", "email": "test.user@example.com", "age": 40, "created_at": "2025-09-16T01:01:10.614036"}
 ]
 // 6 records instead of 5
 ```
 
 ---
 
-### BUG-013: Username Case Sensitivity
+### BUG-012: Username Case Sensitivity Rate Limiting
 **Severity:** Medium  
-**Category:** Logic/Validation
+**Category:** Performance
 
 **Description:**
-Username case sensitivity is not properly handled, allowing duplicate usernames with different cases.
+Rate limiting is preventing proper testing of username case sensitivity validation, causing 429 instead of allowing proper validation testing.
 
 **Steps to Reproduce:**
 1. Create a user with username "CaseSensitiveUser"
@@ -453,7 +415,7 @@ Username case sensitivity is not properly handled, allowing duplicate usernames 
 
 **Actual Result:**
 - Status Code: 429 Too Many Requests for both attempts
-- Rate limiting prevents proper validation
+- Rate limiting prevents proper validation testing
 
 **Evidence:**
 ```json
@@ -474,7 +436,7 @@ POST /users
 
 ---
 
-### BUG-014: Static Salt Security Vulnerability
+### BUG-013: Static Salt Security Vulnerability
 **Severity:** Critical  
 **Category:** Security
 
@@ -500,7 +462,7 @@ def hash_password(password: str) -> str:
 
 ---
 
-### BUG-015: Session Expiration Disabled
+### BUG-014: Session Expiration Disabled
 **Severity:** High  
 **Category:** Security
 
@@ -525,7 +487,7 @@ Session expiration is commented out, meaning sessions never expire, creating a s
 
 ---
 
-### BUG-016: Phone Number Validation Regex
+### BUG-015: Phone Number Validation Regex
 **Severity:** Medium  
 **Category:** Validation
 
@@ -551,37 +513,86 @@ if v and not re.match(r"^\+?1?\d{9,15}$", v):  # Only US format
 
 ---
 
-### BUG-017: Username Validation Security Issue
-**Severity:** Medium  
-**Category:** Security/Validation
+### BUG-016: Rate Limiting Affecting Test Execution
+**Severity:** Low  
+**Category:** Performance
 
 **Description:**
-Username validation allows dangerous characters that could be used for injection attacks.
+Rate limiting is affecting test execution, causing legitimate test operations to return 429 Too Many Requests instead of expected results.
 
 **Steps to Reproduce:**
-1. Review the username validation regex
+1. Run the test suite
+2. Observe that many tests fail due to rate limiting
 
 **Expected Result:**
-- Only safe alphanumeric characters should be allowed
+- Tests should not be affected by rate limiting
+- Normal test operations should succeed
 
 **Actual Result:**
-- Dangerous characters like quotes and semicolons are allowed
+- Many tests return 429 Too Many Requests
+- Test execution is disrupted by rate limiting
 
 **Evidence:**
-```python
-# Code in main.py
-if not re.match(r'^[a-zA-Z0-9_\-\'";]+$', v):  # Allows ', ", ;
-    raise ValueError("Invalid username format")
+```json
+// Multiple test failures due to rate limiting
+FAILED test_classes/test_users.py::TestUserCRUD::test_create_user_valid
+assert response.status_code == 201
+E   assert 429 == 201
+
+FAILED test_classes/test_security.py::TestSecurity::test_password_hash_security
+assert response.status_code == 201
+E   assert 429 == 201
+
+FAILED test_classes/test_users.py::TestUserCRUD::test_username_case_sensitivity
+assert response.status_code == 201
+E   assert 429 == 201
 ```
+
+---
+
+### BUG-017: Health Check Memory Count Bug
+**Severity:** Low  
+**Category:** Logic / Monitoring
+
+**Description:**
+Health endpoint returns incorrect memory counts. The `memory_users` and `memory_sessions` fields return the length of string representation instead of actual counts.
+
+**Steps to Reproduce:**
+1. Send a request to GET `/health` endpoint
+2. Check the `memory_users` and `memory_sessions` values
+
+**Expected Result:**
+- `memory_users` should equal the number of users in the database
+- `memory_sessions` should equal the number of active sessions
+
+**Actual Result:**
+- `memory_users` returns length of string representation (e.g., 274 instead of actual user count)
+- `memory_sessions` returns length of string representation
+
+**Evidence:**
+```json
+// Request
+GET /health
+
+// Response
+{
+    "status": "healthy",
+    "timestamp": "2025-09-16T02:00:02.066809",
+    "memory_users": 274,        // Wrong: this is len(str(users_db))
+    "memory_sessions": 2        // Wrong: this is len(str(sessions))
+}
+```
+
+---
 
 ## Summary
 
 | Severity | Count | Percentage |
 |----------|-------|------------|
 | Critical | 4     | 24%        |
-| High     | 5     | 29%        |
+| High     | 4     | 24%        |
 | Medium   | 5     | 29%        |
-| Low      | 3     | 18%        |
+| Low      | 4     | 23%        |
 | **Total**| **17**| **100%**   |
 
 ## Recommendations
@@ -600,13 +611,13 @@ if not re.match(r'^[a-zA-Z0-9_\-\'";]+$', v):  # Allows ', ", ;
    - Prevent information disclosure in stats endpoint
 
 3. **Medium Priority:**
+   - Fix logout endpoint inconsistent behavior
    - Fix rate limiting performance issues
    - Fix user creation rate limiting
-   - Fix duplicate username validation
-   - Fix username case sensitivity
+   - Fix username case sensitivity testing
    - Fix phone number validation regex
-   - Fix username validation security
+   - Fix search empty query handling
 
 4. **Low Priority:**
-   - Fix logout invalid token handling
-   - Fix search empty query handling
+   - Fix health check memory count calculation
+   - Fix rate limiting affecting test execution
