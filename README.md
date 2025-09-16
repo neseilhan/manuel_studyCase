@@ -72,7 +72,7 @@ qa-assignment/
 └── README.md            # This file
 For QA Engineers
 Your task is to:
-
+ 
 Test all API endpoints thoroughly
 
 Identify and document bugs

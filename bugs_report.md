@@ -2,9 +2,9 @@
 
 ## Executive Summary
 
-This report details the bugs detected in the User Management API. A total of **17 bugs** have been identified through automated testing, with **4 Critical**, **4 High**, **5 Medium**, and **4 Low** severity levels.
+This report details the bugs detected in the User Management API. A total of **16 bugs** have been identified through automated testing, with **4 Critical**, **4 High**, **4 Medium**, and **4 Low** severity levels.
 
-**Test Results:** 76 tests executed, 59 passed, 17 failed, 1 warning
+**Test Results:** 76 tests executed, 59 passed, 17 failed, 3 warnings
 
 ## Bug List
 
@@ -487,33 +487,8 @@ Session expiration is commented out, meaning sessions never expire, creating a s
 
 ---
 
-### BUG-015: Phone Number Validation Regex
-**Severity:** Medium  
-**Category:** Validation
 
-**Description:**
-Phone number validation regex only accepts US format, rejecting valid international phone numbers.
-
-**Steps to Reproduce:**
-1. Try to create a user with international phone number
-2. Check if validation passes
-
-**Expected Result:**
-- International phone numbers should be accepted
-
-**Actual Result:**
-- Only US format phone numbers are accepted
-
-**Evidence:**
-```python
-# Code in main.py
-if v and not re.match(r"^\+?1?\d{9,15}$", v):  # Only US format
-    raise ValueError("Invalid phone number format")
-```
-
----
-
-### BUG-016: Rate Limiting Affecting Test Execution
+### BUG-015: Rate Limiting Affecting Test Execution
 **Severity:** Low  
 **Category:** Performance
 
@@ -550,7 +525,7 @@ E   assert 429 == 201
 
 ---
 
-### BUG-017: Health Check Memory Count Bug
+### BUG-016: Health Check Memory Count Bug
 **Severity:** Low  
 **Category:** Logic / Monitoring
 
@@ -589,11 +564,11 @@ GET /health
 
 | Severity | Count | Percentage |
 |----------|-------|------------|
-| Critical | 4     | 24%        |
-| High     | 4     | 24%        |
-| Medium   | 5     | 29%        |
-| Low      | 4     | 23%        |
-| **Total**| **17**| **100%**   |
+| Critical | 4     | 25%        |
+| High     | 4     | 25%        |
+| Medium   | 4     | 25%        |
+| Low      | 4     | 25%        |
+| **Total**| **16**| **100%**   |
 
 ## Recommendations
 
@@ -615,7 +590,6 @@ GET /health
    - Fix rate limiting performance issues
    - Fix user creation rate limiting
    - Fix username case sensitivity testing
-   - Fix phone number validation regex
    - Fix search empty query handling
 
 4. **Low Priority:**

@@ -162,7 +162,7 @@ test_classes/test_users.py::TestUserCRUD::test_create_user_valid FAILED      [ 1
 test_classes/test_users.py::TestUserCRUD::test_get_user_list_with_pagination FAILED [ 16%]
 test_classes/test_users.py::TestUserCRUD::test_username_case_sensitivity FAILED [ 17%]
 ...
-========================================= 17 failed, 59 passed, 1 warning in 13.56s ======================================
+========================================= 17 failed, 59 passed, 3 warnings in 11.04s ======================================
 ```
 
 ## Test Structure
@@ -238,25 +238,7 @@ pip install -r requirements_test.txt
 
 ### conftest.py
 ```python
-import pytest
-import httpx
-
-BASE_URL = "http://localhost:8000"
-
-@pytest.fixture(scope="session")
-def client():
-    return httpx.Client(base_url=BASE_URL)
-```
-
-### pytest.ini (Optional)
-```ini
-[tool:pytest]
-testpaths = test_classes
-python_files = test_*.py
-python_classes = Test*
-python_functions = test_*
-addopts = -v --tb=short
-```
+``
 
 ## Continuous Integration
 
@@ -267,6 +249,7 @@ addopts = -v --tb=short
 1. **Go to GitHub Repository**
    - Navigate to your repository on GitHub
    - Click on the "Actions" tab
+   -Check the latest version of workflow
 
 2. **View Workflow Runs**
    - You'll see a list of workflow runs
@@ -283,13 +266,6 @@ addopts = -v --tb=short
    - Download `test-reports-{run-number}` artifact
    - Extract and open `test-report.html` for detailed results
 
-5. **View Test Summary**
-   - In the workflow run page, scroll down to see:
-     - Test execution summary
-     - Pass/fail statistics
-     - Failed test details
-     - Performance metrics
- 
 ## Test Reports
 
 ### HTML Report:
@@ -312,20 +288,3 @@ python -m pytest test_classes/ --junitxml=report.xml
 # Generate coverage report
 python -m pytest test_classes/ --cov=../main --cov-report=html --cov-report=term
 ```
-
-## Best Practices
-
-1. **Test Isolation** - Each test should be independent
-2. **Clear Test Names** - Test names should explain what they test
-3. **Assertion Messages** - Error messages should be descriptive
-4. **Test Data Management** - Test data should be manageable
-5. **Error Handling** - Tests should handle expected errors
-6. **Performance Considerations** - Tests should run fast
-7. **Documentation** - Tests should be documented
-
-## Contact
-
-For questions about the test suite:
-- Review the test files
-- Check the bug report
-- Read the test report

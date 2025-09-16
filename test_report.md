@@ -8,12 +8,12 @@ This report contains the results of comprehensive testing conducted for the User
 **Current Test Status:**
 - 59 tests passed (77.6%)
 - 17 tests failed (22.4%)
-- 1 warning
-- 17 bugs detected
+- 3 warnings
+- 16 bugs detected
 
 ### Key Findings
-- **17 bugs** detected
-- **4 Critical**, **4 High**, **5 Medium**, **4 Low** severity level bugs
+- **16 bugs** detected
+- **4 Critical**, **4 High**, **4 Medium**, **4 Low** severity level bugs
 - Serious security vulnerabilities in authentication and authorization systems
 - Input validation and business logic errors
 - Rate limiting and session management issues
@@ -27,8 +27,8 @@ This report contains the results of comprehensive testing conducted for the User
 | Failed Tests | 17 |
 | Pass Rate | 77.6% |
 | Test Coverage | ~90% (Endpoint Coverage) |
-| Execution Time | 13.56 seconds |
-| Warnings | 1 |
+| Execution Time | 11.04 seconds |
+| Warnings | 3 |
 
 ## Test Categories
 
