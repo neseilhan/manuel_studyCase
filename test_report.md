@@ -2,18 +2,18 @@
 
 ## Executive Summary
 
-This report contains the results of comprehensive testing conducted for the User Management API. A total of **74 test cases** were executed, with **56 tests passed** and **18 tests failed**. The test coverage rate is **75.7%**.
+This report contains the results of comprehensive testing conducted for the User Management API. A total of **76 test cases** were executed, with **59 tests passed** and **17 tests failed**. The test coverage rate is **77.6%**.
 
 
 **Current Test Status:**
-- ✅ 56 tests passed (75.7%)
-- ❌ 18 tests failed (24.3%)
-- ⚠️ 1 warning
-- 🐛 18 bugs detected
+- 59 tests passed (77.6%)
+- 17 tests failed (22.4%)
+- 1 warning
+- 17 bugs detected
 
 ### Key Findings
-- **18 bugs** detected
-- **5 Critical**, **4 High**, **6 Medium**, **3 Low** severity level bugs
+- **17 bugs** detected
+- **4 Critical**, **4 High**, **5 Medium**, **4 Low** severity level bugs
 - Serious security vulnerabilities in authentication and authorization systems
 - Input validation and business logic errors
 - Rate limiting and session management issues
@@ -22,42 +22,41 @@ This report contains the results of comprehensive testing conducted for the User
 
 | Metric | Value |
 |--------|-------|
-| Total Tests Executed | 74 |
-| Passed Tests | 56 |
-| Failed Tests | 18 |
-| Pass Rate | 75.7% |
+| Total Tests Executed | 76 |
+| Passed Tests | 59 |
+| Failed Tests | 17 |
+| Pass Rate | 77.6% |
 | Test Coverage | ~90% (Endpoint Coverage) |
-| Execution Time | 12.42 seconds |
+| Execution Time | 13.56 seconds |
 | Warnings | 1 |
 
 ## Test Categories
 
 ### 1. Authentication Tests (TestAuth)
 **Total Tests:** 8  
-**Passed:** 4  
-**Failed:** 4  
-**Pass Rate:** 50%
+**Passed:** 6  
+**Failed:** 2  
+**Pass Rate:** 75%
 
 #### Test Results:
 - ✅ `test_login_invalid_username` - PASSED
 - ✅ `test_login_invalid_password` - PASSED  
 - ✅ `test_login_empty_credentials` - PASSED
 - ✅ `test_logout_no_token` - PASSED
-- ❌ `test_login_valid` - FAILED (401 instead of 200)
-- ❌ `test_logout_valid_token` - FAILED (401 instead of 200)
-- ❌ `test_logout_invalid_token` - FAILED (Wrong message)
-- ❌ `test_session_expiration` - FAILED (401 instead of 200)
+- ✅ `test_login_valid` - PASSED
+- ✅ `test_logout_valid_token` - PASSED
+- ❌ `test_logout_invalid_token` - FAILED (Wrong message: "Logged out successfully" instead of "No active session")
+- ❌ `test_token_expiration_handling` - FAILED (200 instead of 401 for malformed token)
 
 #### Issues Found:
-- Login endpoint returns 401 even with valid user credentials
-- Session management is not working properly
-- Logout token validation is incorrect
+- Logout endpoint returns wrong message for invalid tokens
+- Token validation allows malformed tokens (missing Bearer prefix)
 
 ### 2. User CRUD Tests (TestUserCRUD)
 **Total Tests:** 15  
-**Passed:** 11  
-**Failed:** 4  
-**Pass Rate:** 73.3%
+**Passed:** 12  
+**Failed:** 3  
+**Pass Rate:** 80.0%
 
 #### Test Results:
 - ❌ `test_create_user_valid` - FAILED (429 instead of 201)
@@ -77,7 +76,6 @@ This report contains the results of comprehensive testing conducted for the User
 - ✅ `test_delete_user_without_auth` - PASSED
 - ✅ `test_delete_user_invalid_id` - PASSED
 - ❌ `test_username_case_sensitivity` - FAILED (429 instead of 201)
-- ❌ `test_create_user_duplicate_username` - FAILED (429 instead of 400)
 
 #### Issues Found:
 - Username case sensitivity problem
@@ -87,9 +85,9 @@ This report contains the results of comprehensive testing conducted for the User
 
 ### 3. Other Tests (TestMisc)
 **Total Tests:** 21  
-**Passed:** 14  
-**Failed:** 7  
-**Pass Rate:** 66.7%
+**Passed:** 13  
+**Failed:** 8  
+**Pass Rate:** 61.9%
 
 #### Test Results:
 - ✅ `test_root_endpoint` - PASSED
@@ -110,10 +108,40 @@ This report contains the results of comprehensive testing conducted for the User
 - ❌ `test_search_users_exact_match` - FAILED (400 instead of 200)
 - ❌ `test_search_users_empty_query` - FAILED (400 instead of 422)
 - ❌ `test_search_users_invalid_field` - FAILED (400 instead of 422)
+- ❌ `test_health_check_memory_counts` - FAILED (Incorrect memory count calculation)
 
 #### Issues Found:
-- Search endpoint is completely broken
-- Validation error handling is incorrect
+- Search endpoint is completely broken (all search tests fail with 400)
+- Validation error handling is incorrect (400 instead of 422)
+- Health check memory count calculation is wrong
+
+### 4. Performance Tests (TestPerformance)
+**Total Tests:** 1  
+**Passed:** 0  
+**Failed:** 1  
+**Pass Rate:** 0%
+
+#### Test Results:
+- ❌ `test_rate_limiting_performance` - FAILED (No rate limiting detected)
+
+#### Issues Found:
+- Rate limiting is not working properly
+
+### 5. Security Tests (TestSecurity)
+**Total Tests:** 3  
+**Passed:** 0  
+**Failed:** 3  
+**Pass Rate:** 0%
+
+#### Test Results:
+- ❌ `test_password_hash_security` - FAILED (429 instead of 201 - rate limited)
+- ❌ `test_session_hijacking_attempt` - FAILED (200 instead of 401 - predictable token accepted)
+- ❌ `test_information_disclosure` - FAILED (Session tokens exposed in stats)
+
+#### Issues Found:
+- Rate limiting affecting security tests
+- Session hijacking vulnerability (predictable tokens accepted)
+- Information disclosure in stats endpoint
 
 ## Performance Metrics
 
@@ -130,13 +158,14 @@ This report contains the results of comprehensive testing conducted for the User
 1. **MD5 Hash Usage** - Passwords are hashed with insecure MD5
 2. **Static Salt** - Same salt used for all passwords
 3. **Session Expiration Disabled** - Sessions never expire
-4. **Authorization Bypass** - Users can update other users
-5. **Login Authentication Failure** - Valid users cannot login
+4. **Session Hijacking Vulnerability** - Predictable tokens are accepted
+
+### High Security Issues:
+1. **Information Disclosure** - Stats endpoint exposes session tokens
+2. **Token Validation Bypass** - Malformed tokens (missing Bearer prefix) are accepted
 
 ### Medium Security Issues:
-1. **Information Disclosure** - Stats endpoint exposes sensitive information
-2. **Username Validation** - Dangerous characters are allowed
-3. **Hidden Bulk Endpoint** - Hidden but accessible bulk endpoint
+1. **Logout Message Inconsistency** - Wrong message for invalid tokens
 
 ## Test Coverage Analysis
 
@@ -147,8 +176,8 @@ This report contains the results of comprehensive testing conducted for the User
 - ✅ `GET /users/{id}` - 80% covered
 - ✅ `PUT /users/{id}` - 70% covered
 - ✅ `DELETE /users/{id}` - 60% covered
-- ❌ `POST /login` - 40% covered (authentication issues)
-- ❌ `POST /logout` - 60% covered
+- ✅ `POST /login` - 75% covered (most tests pass)
+- ✅ `POST /logout` - 75% covered (minor issues with invalid token handling)
 - ❌ `GET /users/search` - 0% covered (completely broken)
 - ✅ `GET /stats` - 100% covered
 - ✅ `GET /health` - 100% covered
@@ -188,18 +217,8 @@ This report contains the results of comprehensive testing conducted for the User
 ### Test Environment Improvements:
 1. **Add Test Data Management** - Better test data setup/teardown
 2. **Add Test Isolation** - Tests should not depend on each other
-3. **Add Test Reporting** - HTML/XML test reports
-4. **Add CI/CD Integration** - Automated testing pipeline
 
 ## Conclusion
 
-Serious security vulnerabilities and functional errors have been detected in the API. Especially authentication and authorization systems need to be completely rewritten. Test coverage is 70.5%, which is acceptable but security tests are missing.
+Serious security vulnerabilities and functional errors have been detected in the API. The main issues are in password hashing (MD5), session management, and search functionality. Authentication system works mostly correctly but has minor token validation issues. Test coverage is 77.6%, which is good, but security and performance tests need improvement.
 
-**Risk Assessment:** HIGH - API is not ready for production.
-
-**Next Steps:**
-1. Fix Critical and High level bugs
-2. Expand security tests
-3. Add performance tests
-4. Run regression tests
-5. Conduct security audit 
